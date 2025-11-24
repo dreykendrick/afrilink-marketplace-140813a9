@@ -96,10 +96,10 @@ const Index = () => {
     );
   }
 
-  if (view === 'marketplace' && currentUser) {
+  if (view === 'marketplace') {
     return (
       <div className="min-h-screen bg-background">
-        <MarketplaceNav currentUser={currentUser} onLogout={handleLogout} />
+        <MarketplaceNav currentUser={currentUser} onLogout={handleLogout} onGoHome={() => handleNavigate('landing')} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product, index) => (

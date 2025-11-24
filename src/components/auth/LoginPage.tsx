@@ -19,12 +19,6 @@ export const LoginPage = ({ onLogin, onNavigate }: LoginPageProps) => {
       label: 'Login as Affiliate',
       gradient: 'from-afrilink-purple to-afrilink-pink',
     },
-    {
-      role: 'consumer' as const,
-      icon: ShoppingCart,
-      label: 'Login as Consumer',
-      gradient: 'from-afrilink-green to-emerald-600',
-    },
   ];
 
   return (
