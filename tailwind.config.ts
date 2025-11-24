@@ -57,6 +57,31 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        afrilink: {
+          amber: "hsl(var(--afrilink-amber))",
+          orange: "hsl(var(--afrilink-orange))",
+          purple: "hsl(var(--afrilink-purple))",
+          slate: {
+            900: "hsl(var(--afrilink-slate-900))",
+            800: "hsl(var(--afrilink-slate-800))",
+            700: "hsl(var(--afrilink-slate-700))",
+          },
+          green: "hsl(var(--afrilink-green))",
+          blue: "hsl(var(--afrilink-blue))",
+          pink: "hsl(var(--afrilink-pink))",
+        },
+      },
+      backgroundImage: {
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-hero': 'var(--gradient-hero)',
+        'gradient-card': 'var(--gradient-card)',
+        'gradient-green': 'var(--gradient-green)',
+        'gradient-blue': 'var(--gradient-blue)',
+        'gradient-purple': 'var(--gradient-purple)',
+      },
+      boxShadow: {
+        'glow': 'var(--shadow-glow)',
+        'card': 'var(--shadow-card)',
       },
       borderRadius: {
         lg: "var(--radius)",
