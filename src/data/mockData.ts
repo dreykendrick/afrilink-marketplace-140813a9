@@ -1,4 +1,4 @@
-import { Product, User, VendorStats, AffiliateStats } from '@/types';
+import { Product, User, VendorStats, AffiliateStats, Application, AdminStats } from '@/types';
 
 export const products: Product[] = [
   {
@@ -40,6 +40,7 @@ export const users: Record<string, User> = {
   vendor: { id: 1, name: 'John Kamau', email: 'john@example.com', role: 'vendor', wallet: 850000 },
   affiliate: { id: 2, name: 'Amina Hassan', email: 'amina@example.com', role: 'affiliate', wallet: 320000 },
   consumer: { id: 3, name: 'David Mwanga', email: 'david@example.com', role: 'consumer', wallet: 50000 },
+  admin: { id: 4, name: 'Admin User', email: 'admin@afrilink.com', role: 'admin', wallet: 0 },
 };
 
 export const vendorStats: VendorStats = {
@@ -54,4 +55,58 @@ export const affiliateStats: AffiliateStats = {
   clicks: 856,
   conversions: 42,
   rate: 4.9,
+};
+
+export const applications: Application[] = [
+  {
+    id: 1,
+    userId: 5,
+    userName: 'Sarah Omondi',
+    email: 'sarah@example.com',
+    role: 'vendor',
+    status: 'pending',
+    appliedAt: '2025-01-15T10:30:00Z',
+    businessName: 'Digital Pro Solutions',
+    description: 'We specialize in digital marketing tools and courses for African businesses.',
+  },
+  {
+    id: 2,
+    userId: 6,
+    userName: 'Michael Kipchoge',
+    email: 'michael@example.com',
+    role: 'affiliate',
+    status: 'pending',
+    appliedAt: '2025-01-16T14:20:00Z',
+    description: 'Experienced digital marketer with 50k+ followers on social media platforms.',
+  },
+  {
+    id: 3,
+    userId: 7,
+    userName: 'Grace Wanjiku',
+    email: 'grace@example.com',
+    role: 'vendor',
+    status: 'pending',
+    appliedAt: '2025-01-17T09:15:00Z',
+    businessName: 'E-Learning Hub Africa',
+    description: 'Online education platform offering courses in technology and business.',
+  },
+  {
+    id: 4,
+    userId: 8,
+    userName: 'James Mwangi',
+    email: 'james@example.com',
+    role: 'affiliate',
+    status: 'pending',
+    appliedAt: '2025-01-18T11:45:00Z',
+    description: 'Content creator focusing on tech reviews and entrepreneurship.',
+  },
+];
+
+export const adminStats: AdminStats = {
+  totalUsers: 1248,
+  totalVendors: 89,
+  totalAffiliates: 234,
+  pendingApplications: 4,
+  totalRevenue: 45680000,
+  monthlyRevenue: 12450000,
 };

@@ -1,7 +1,7 @@
 import { ShoppingCart, Package, TrendingUp } from 'lucide-react';
 
 interface LoginPageProps {
-  onLogin: (role: 'vendor' | 'affiliate' | 'consumer') => void;
+  onLogin: (role: 'vendor' | 'affiliate' | 'admin') => void;
   onNavigate: (view: string) => void;
 }
 
@@ -18,6 +18,12 @@ export const LoginPage = ({ onLogin, onNavigate }: LoginPageProps) => {
       icon: TrendingUp,
       label: 'Login as Affiliate',
       gradient: 'from-afrilink-purple to-afrilink-pink',
+    },
+    {
+      role: 'admin' as const,
+      icon: ShoppingCart,
+      label: 'Login as Admin',
+      gradient: 'from-red-500 to-orange-600',
     },
   ];
 

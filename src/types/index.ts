@@ -14,8 +14,29 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'vendor' | 'affiliate' | 'consumer';
+  role: 'vendor' | 'affiliate' | 'consumer' | 'admin';
   wallet: number;
+}
+
+export interface Application {
+  id: number;
+  userId: number;
+  userName: string;
+  email: string;
+  role: 'vendor' | 'affiliate';
+  status: 'pending' | 'approved' | 'rejected';
+  appliedAt: string;
+  businessName?: string;
+  description?: string;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  totalVendors: number;
+  totalAffiliates: number;
+  pendingApplications: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
 }
 
 export interface VendorStats {
