@@ -5,7 +5,7 @@ import { formatCurrency } from '@/utils/currency';
 interface LandingPageProps {
   products: Product[];
   onNavigate: (view: string) => void;
-  onLogin: (role: 'vendor' | 'affiliate' | 'consumer') => void;
+  onLogin: (role: 'vendor' | 'affiliate' | 'admin') => void;
 }
 
 export const LandingPage = ({ products, onNavigate, onLogin }: LandingPageProps) => {

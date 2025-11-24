@@ -5,12 +5,13 @@ import { DashboardNav } from '@/components/dashboard/DashboardNav';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { VendorDashboard } from '@/components/dashboard/VendorDashboard';
 import { AffiliateDashboard } from '@/components/dashboard/AffiliateDashboard';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { MarketplaceNav } from '@/components/marketplace/MarketplaceNav';
 import { ProductCard } from '@/components/marketplace/ProductCard';
 import { ProductModal } from '@/components/marketplace/ProductModal';
 import { Notification } from '@/components/Notification';
-import { products, users, vendorStats, affiliateStats } from '@/data/mockData';
-import { User, Product } from '@/types';
+import { products, users, vendorStats, affiliateStats, applications, adminStats } from '@/data/mockData';
+import { User, Product, Application } from '@/types';
 
 type View = 'landing' | 'login' | 'dashboard' | 'marketplace';
 
@@ -20,14 +21,15 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+  const [pendingApplications, setPendingApplications] = useState<Application[]>(applications);
 
   const showNotification = (message: string) => {
     setNotification(message);
   };
 
-  const handleLogin = (role: 'vendor' | 'affiliate' | 'consumer') => {
+  const handleLogin = (role: 'vendor' | 'affiliate' | 'admin') => {
     setCurrentUser(users[role]);
-    setView(role === 'consumer' ? 'marketplace' : 'dashboard');
+    setView('dashboard');
     showNotification(`Welcome back, ${users[role].name}!`);
   };
 
@@ -52,6 +54,16 @@ const Index = () => {
 
   const handleNavigate = (newView: string) => {
     setView(newView as View);
+  };
+
+  const handleApproveApplication = (id: number) => {
+    setPendingApplications((prev) => prev.filter((app) => app.id !== id));
+    showNotification('Application approved successfully!');
+  };
+
+  const handleRejectApplication = (id: number) => {
+    setPendingApplications((prev) => prev.filter((app) => app.id !== id));
+    showNotification('Application rejected.');
   };
 
   if (view === 'landing') {
@@ -81,12 +93,20 @@ const Index = () => {
           <div className="flex-1 p-8">
             {currentUser.role === 'vendor' ? (
               <VendorDashboard currentUser={currentUser} products={products} stats={vendorStats} />
-            ) : (
+            ) : currentUser.role === 'affiliate' ? (
               <AffiliateDashboard
                 currentUser={currentUser}
                 products={products}
                 stats={affiliateStats}
                 onGenerateLink={handleGenerateLink}
+              />
+            ) : (
+              <AdminDashboard
+                currentUser={currentUser}
+                applications={pendingApplications}
+                stats={adminStats}
+                onApprove={handleApproveApplication}
+                onReject={handleRejectApplication}
               />
             )}
           </div>
