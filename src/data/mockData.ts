@@ -1,4 +1,4 @@
-import { Product, User, VendorStats, AffiliateStats, Application, AdminStats } from '@/types';
+import { Product, User, VendorStats, AffiliateStats, Application } from '@/types';
 
 export const products: Product[] = [
   {
@@ -40,7 +40,6 @@ export const users: Record<string, User> = {
   vendor: { id: 1, name: 'John Kamau', email: 'john@example.com', role: 'vendor', wallet: 850000 },
   affiliate: { id: 2, name: 'Amina Hassan', email: 'amina@example.com', role: 'affiliate', wallet: 320000 },
   consumer: { id: 3, name: 'David Mwanga', email: 'david@example.com', role: 'consumer', wallet: 50000 },
-  admin: { id: 4, name: 'Admin User', email: 'admin@afrilink.com', role: 'admin', wallet: 0 },
 };
 
 export const vendorStats: VendorStats = {
@@ -102,11 +101,3 @@ export const applications: Application[] = [
   },
 ];
 
-export const adminStats: AdminStats = {
-  totalUsers: 1248,
-  totalVendors: 89,
-  totalAffiliates: 234,
-  pendingApplications: 4,
-  totalRevenue: 45680000,
-  monthlyRevenue: 12450000,
-};

@@ -5,12 +5,11 @@ import { DashboardNav } from '@/components/dashboard/DashboardNav';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { VendorDashboard } from '@/components/dashboard/VendorDashboard';
 import { AffiliateDashboard } from '@/components/dashboard/AffiliateDashboard';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { MarketplaceNav } from '@/components/marketplace/MarketplaceNav';
 import { ProductCard } from '@/components/marketplace/ProductCard';
 import { ProductModal } from '@/components/marketplace/ProductModal';
 import { Notification } from '@/components/Notification';
-import { products, users, vendorStats, affiliateStats, applications, adminStats } from '@/data/mockData';
+import { products, users, vendorStats, affiliateStats, applications } from '@/data/mockData';
 import { User, Product, Application } from '@/types';
 
 type View = 'landing' | 'login' | 'dashboard' | 'marketplace';
@@ -27,7 +26,7 @@ const Index = () => {
     setNotification(message);
   };
 
-  const handleLogin = (role: 'vendor' | 'affiliate' | 'admin') => {
+  const handleLogin = (role: 'vendor' | 'affiliate') => {
     setCurrentUser(users[role]);
     setView('dashboard');
     showNotification(`Welcome back, ${users[role].name}!`);
@@ -93,20 +92,12 @@ const Index = () => {
           <div className="flex-1 p-8">
             {currentUser.role === 'vendor' ? (
               <VendorDashboard currentUser={currentUser} products={products} stats={vendorStats} />
-            ) : currentUser.role === 'affiliate' ? (
+            ) : (
               <AffiliateDashboard
                 currentUser={currentUser}
                 products={products}
                 stats={affiliateStats}
                 onGenerateLink={handleGenerateLink}
-              />
-            ) : (
-              <AdminDashboard
-                currentUser={currentUser}
-                applications={pendingApplications}
-                stats={adminStats}
-                onApprove={handleApproveApplication}
-                onReject={handleRejectApplication}
               />
             )}
           </div>

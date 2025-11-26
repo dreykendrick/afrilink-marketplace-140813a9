@@ -14,7 +14,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'vendor' | 'affiliate' | 'consumer' | 'admin';
+  role: 'vendor' | 'affiliate' | 'consumer';
   wallet: number;
 }
 
@@ -30,14 +30,6 @@ export interface Application {
   description?: string;
 }
 
-export interface AdminStats {
-  totalUsers: number;
-  totalVendors: number;
-  totalAffiliates: number;
-  pendingApplications: number;
-  totalRevenue: number;
-  monthlyRevenue: number;
-}
 
 export interface VendorStats {
   revenue: number;
