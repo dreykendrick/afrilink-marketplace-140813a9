@@ -1,23 +1,17 @@
-import { Menu, Bell, ShoppingCart } from 'lucide-react';
+import { Bell, ShoppingCart, LogOut } from 'lucide-react';
 import { User } from '@/types';
 
 interface DashboardNavProps {
   currentUser: User;
-  onToggleSidebar: () => void;
+  onLogout: () => void;
 }
 
-export const DashboardNav = ({ currentUser, onToggleSidebar }: DashboardNavProps) => {
+export const DashboardNav = ({ currentUser, onLogout }: DashboardNavProps) => {
   return (
     <nav className="bg-sidebar border-b border-sidebar-border sticky top-0 z-40 backdrop-blur-sm">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
-            <button
-              onClick={onToggleSidebar}
-              className="text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow">
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
@@ -31,6 +25,13 @@ export const DashboardNav = ({ currentUser, onToggleSidebar }: DashboardNavProps
                 <div className="text-xs text-sidebar-foreground/60 capitalize">{currentUser.role}</div>
               </div>
             </div>
+            <button
+              onClick={onLogout}
+              className="text-sidebar-foreground/60 hover:text-red-400 transition-colors"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>

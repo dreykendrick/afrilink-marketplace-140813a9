@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { LandingPage } from '@/components/landing/LandingPage';
 import { LoginPage } from '@/components/auth/LoginPage';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
-import { Sidebar } from '@/components/dashboard/Sidebar';
 import { VendorDashboard } from '@/components/dashboard/VendorDashboard';
 import { AffiliateDashboard } from '@/components/dashboard/AffiliateDashboard';
 import { MarketplaceNav } from '@/components/marketplace/MarketplaceNav';
@@ -17,7 +16,6 @@ type View = 'landing' | 'login' | 'dashboard' | 'marketplace';
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [view, setView] = useState<View>('landing');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [pendingApplications, setPendingApplications] = useState<Application[]>(applications);
@@ -86,21 +84,18 @@ const Index = () => {
   if (view === 'dashboard' && currentUser) {
     return (
       <div className="min-h-screen bg-background">
-        <DashboardNav currentUser={currentUser} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div className="flex">
-          {sidebarOpen && <Sidebar currentUser={currentUser} onLogout={handleLogout} />}
-          <div className="flex-1 p-8">
-            {currentUser.role === 'vendor' ? (
-              <VendorDashboard currentUser={currentUser} products={products} stats={vendorStats} />
-            ) : (
-              <AffiliateDashboard
-                currentUser={currentUser}
-                products={products}
-                stats={affiliateStats}
-                onGenerateLink={handleGenerateLink}
-              />
-            )}
-          </div>
+        <DashboardNav currentUser={currentUser} onLogout={handleLogout} />
+        <div className="p-8">
+          {currentUser.role === 'vendor' ? (
+            <VendorDashboard currentUser={currentUser} products={products} stats={vendorStats} />
+          ) : (
+            <AffiliateDashboard
+              currentUser={currentUser}
+              products={products}
+              stats={affiliateStats}
+              onGenerateLink={handleGenerateLink}
+            />
+          )}
         </div>
         {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
       </div>
