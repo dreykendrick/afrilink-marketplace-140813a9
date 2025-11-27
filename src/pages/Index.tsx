@@ -99,15 +99,26 @@ const Index = () => {
     );
   }
 
-  if (view === 'verification' && pendingUserId) {
+  if (view === 'verification') {
+    const userId = pendingUserId || currentUser?.id.toString();
+    if (!userId) {
+      setView('login');
+      return null;
+    }
+
     return (
       <>
         <VerificationForm 
-          userId={pendingUserId}
+          userId={userId}
           onComplete={() => {
-            showNotification('Verification complete! Please log in.');
-            setView('login');
-            setPendingUserId(null);
+            if (currentUser) {
+              showNotification('Verification complete!');
+              setView('dashboard');
+            } else {
+              showNotification('Verification complete! Please log in.');
+              setView('login');
+              setPendingUserId(null);
+            }
           }}
         />
         {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
@@ -121,13 +132,19 @@ const Index = () => {
         <DashboardNav currentUser={currentUser} onLogout={handleLogout} />
         <div className="p-8">
           {currentUser.role === 'vendor' ? (
-            <VendorDashboard currentUser={currentUser} products={products} stats={vendorStats} />
+            <VendorDashboard 
+              currentUser={currentUser} 
+              products={products} 
+              stats={vendorStats}
+              onVerify={() => setView('verification')}
+            />
           ) : (
             <AffiliateDashboard
               currentUser={currentUser}
               products={products}
               stats={affiliateStats}
               onGenerateLink={handleGenerateLink}
+              onVerify={() => setView('verification')}
             />
           )}
         </div>
