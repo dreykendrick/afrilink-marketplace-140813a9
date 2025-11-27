@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { LandingPage } from '@/components/landing/LandingPage';
 import { LoginPage } from '@/components/auth/LoginPage';
+import { SignupPage } from '@/components/auth/SignupPage';
+import { VerificationForm } from '@/components/auth/VerificationForm';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
 import { VendorDashboard } from '@/components/dashboard/VendorDashboard';
 import { AffiliateDashboard } from '@/components/dashboard/AffiliateDashboard';
@@ -11,7 +13,7 @@ import { Notification } from '@/components/Notification';
 import { products, users, vendorStats, affiliateStats, applications } from '@/data/mockData';
 import { User, Product, Application } from '@/types';
 
-type View = 'landing' | 'login' | 'dashboard' | 'marketplace';
+type View = 'landing' | 'login' | 'signup' | 'verification' | 'dashboard' | 'marketplace';
 
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -19,6 +21,7 @@ const Index = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [pendingApplications, setPendingApplications] = useState<Application[]>(applications);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
 
   const showNotification = (message: string) => {
     setNotification(message);
@@ -76,6 +79,37 @@ const Index = () => {
     return (
       <>
         <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} />
+        {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
+      </>
+    );
+  }
+
+  if (view === 'signup') {
+    return (
+      <>
+        <SignupPage 
+          onNavigate={handleNavigate} 
+          onSignupSuccess={(userId) => {
+            setPendingUserId(userId);
+            setView('verification');
+          }}
+        />
+        {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
+      </>
+    );
+  }
+
+  if (view === 'verification' && pendingUserId) {
+    return (
+      <>
+        <VerificationForm 
+          userId={pendingUserId}
+          onComplete={() => {
+            showNotification('Verification complete! Please log in.');
+            setView('login');
+            setPendingUserId(null);
+          }}
+        />
         {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
       </>
     );

@@ -52,6 +52,16 @@ export const LoginPage = ({ onLogin, onNavigate }: LoginPageProps) => {
               Back to Home
             </button>
           </div>
+          
+          <div className="text-center text-sm mt-4">
+            Don't have an account?{' '}
+            <button 
+              onClick={() => onNavigate('signup')}
+              className="text-primary hover:underline font-semibold"
+            >
+              Sign Up
+            </button>
+          </div>
         </div>
       </div>
     </div>

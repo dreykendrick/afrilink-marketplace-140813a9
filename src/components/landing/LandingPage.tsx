@@ -61,14 +61,14 @@ export const LandingPage = ({ products, onNavigate, onLogin }: LandingPageProps)
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
             <button
-              onClick={() => onLogin('vendor')}
+              onClick={() => onNavigate('signup')}
               className="px-8 py-4 bg-gradient-primary text-white rounded-xl font-semibold hover:shadow-glow transition-all duration-300 flex items-center justify-center space-x-2 group"
             >
               <Package className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <span>Start Selling</span>
             </button>
             <button
-              onClick={() => onLogin('affiliate')}
+              onClick={() => onNavigate('signup')}
               className="px-8 py-4 bg-white/10 backdrop-blur-sm text-foreground rounded-xl font-semibold hover:bg-white/20 transition-all duration-300 flex items-center justify-center space-x-2 border border-white/20 group"
             >
               <TrendingUp className="w-5 h-5 group-hover:scale-110 transition-transform" />

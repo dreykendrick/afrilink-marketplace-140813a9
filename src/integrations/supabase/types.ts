@@ -68,28 +68,43 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          email_verified: boolean | null
           full_name: string | null
           id: string
           phone: string | null
+          phone_verified: boolean | null
+          photo_verified: boolean | null
           updated_at: string
+          verification_photo_url: string | null
+          verification_status: string | null
           wallet_balance: number | null
         }
         Insert: {
           created_at?: string
           email: string
+          email_verified?: boolean | null
           full_name?: string | null
           id: string
           phone?: string | null
+          phone_verified?: boolean | null
+          photo_verified?: boolean | null
           updated_at?: string
+          verification_photo_url?: string | null
+          verification_status?: string | null
           wallet_balance?: number | null
         }
         Update: {
           created_at?: string
           email?: string
+          email_verified?: boolean | null
           full_name?: string | null
           id?: string
           phone?: string | null
+          phone_verified?: boolean | null
+          photo_verified?: boolean | null
           updated_at?: string
+          verification_photo_url?: string | null
+          verification_status?: string | null
           wallet_balance?: number | null
         }
         Relationships: []
