@@ -130,7 +130,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <DashboardNav currentUser={currentUser} onLogout={handleLogout} />
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           {currentUser.role === 'vendor' ? (
             <VendorDashboard 
               currentUser={currentUser} 

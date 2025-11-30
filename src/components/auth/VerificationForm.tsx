@@ -125,29 +125,29 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-3 sm:p-4">
       <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-2xl">Account Verification</CardTitle>
-          <CardDescription>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-xl sm:text-2xl">Account Verification</CardTitle>
+          <CardDescription className="text-sm">
             Complete all verification steps to activate your account
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-4 sm:space-y-6">
           {/* Email Verification */}
-          <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+          <div className="flex items-center space-x-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
             <div>
-              <p className="font-medium text-green-900 dark:text-green-100">Email Verified</p>
-              <p className="text-sm text-green-700 dark:text-green-300">Your email has been confirmed</p>
+              <p className="font-medium text-green-900 dark:text-green-100 text-sm sm:text-base">Email Verified</p>
+              <p className="text-xs sm:text-sm text-green-700 dark:text-green-300">Your email has been confirmed</p>
             </div>
           </div>
 
           {/* Phone Verification */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <Phone className="w-5 h-5" />
-              <Label>Phone Verification</Label>
+              <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Label className="text-sm sm:text-base">Phone Verification</Label>
             </div>
             {!phoneVerified ? (
               <>
@@ -156,15 +156,16 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
                   placeholder="+1 (555) 123-4567"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  className="text-sm sm:text-base"
                 />
                 <Button onClick={handlePhoneVerification} className="w-full">
                   Verify Phone Number
                 </Button>
               </>
             ) : (
-              <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center space-x-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                <p className="font-medium text-green-900 dark:text-green-100">Phone Verified</p>
+                <p className="font-medium text-green-900 dark:text-green-100 text-sm sm:text-base">Phone Verified</p>
               </div>
             )}
           </div>
@@ -172,14 +173,14 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
           {/* Photo Verification */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <Camera className="w-5 h-5" />
-              <Label>Photo Verification</Label>
+              <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Label className="text-sm sm:text-base">Photo Verification</Label>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Upload a clear photo of yourself holding an ID document
             </p>
             {photoPreview && (
-              <div className="relative w-full h-48 rounded-lg overflow-hidden border">
+              <div className="relative w-full h-40 sm:h-48 rounded-lg overflow-hidden border">
                 <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
               </div>
             )}
@@ -189,7 +190,7 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoChange}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-sm"
                 />
                 <Button 
                   onClick={handlePhotoUpload} 
@@ -201,9 +202,9 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
                 </Button>
               </>
             ) : (
-              <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center space-x-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                <p className="font-medium text-green-900 dark:text-green-100">Photo Uploaded</p>
+                <p className="font-medium text-green-900 dark:text-green-100 text-sm sm:text-base">Photo Uploaded</p>
               </div>
             )}
           </div>
