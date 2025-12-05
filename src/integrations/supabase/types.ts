@@ -64,6 +64,59 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          category: string
+          commission: number
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          price: number
+          sales: number
+          status: string
+          title: string
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          category: string
+          commission?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          price?: number
+          sales?: number
+          status?: string
+          title: string
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          category?: string
+          commission?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          price?: number
+          sales?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
