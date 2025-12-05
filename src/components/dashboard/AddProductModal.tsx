@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Upload, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Upload, Loader2, ImagePlus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,7 +29,10 @@ const categories = [
 
 export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductModalProps) => {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -38,6 +41,85 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
     category: '',
     image_url: ''
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file',
+        description: 'Please select an image file',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please select an image under 5MB',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: 'Not authenticated',
+          description: 'Please log in to upload images',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, image_url: publicUrl });
+      setImagePreview(publicUrl);
+
+      toast({
+        title: 'Image uploaded!',
+        description: 'Your product image is ready'
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload image',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setFormData({ ...formData, image_url: '' });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +151,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         vendor_id: user.id,
         title: formData.title,
         description: formData.description,
-        price: Math.round(parseFloat(formData.price) * 100), // Store in cents
+        price: Math.round(parseFloat(formData.price) * 100),
         commission: parseInt(formData.commission),
         category: formData.category,
         image_url: formData.image_url || null
@@ -82,6 +164,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         description: 'Your product is pending review'
       });
 
+      // Reset form
       setFormData({
         title: '',
         description: '',
@@ -90,6 +173,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         category: '',
         image_url: ''
       });
+      setImagePreview(null);
       
       onProductAdded();
       onClose();
@@ -111,7 +195,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       
       <div className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-t-2xl sm:rounded-2xl border border-border shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:fade-in duration-300">
-        <div className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 flex items-center justify-between">
+        <div className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 flex items-center justify-between z-10">
           <h2 className="text-lg sm:text-xl font-bold text-foreground">Add New Product</h2>
           <button
             onClick={onClose}
@@ -122,6 +206,73 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          {/* Image Upload Section */}
+          <div className="space-y-2">
+            <Label>Product Image</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            
+            {imagePreview ? (
+              <div className="relative group">
+                <img
+                  src={imagePreview}
+                  alt="Product preview"
+                  className="w-full h-48 object-cover rounded-xl border border-border"
+                />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    <Upload className="w-4 h-4 mr-1" />
+                    Change
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={removeImage}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full h-48 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-10 h-10 text-muted-foreground animate-spin" />
+                    <span className="text-sm text-muted-foreground">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center">
+                      <ImagePlus className="w-7 h-7 text-muted-foreground" />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-sm font-medium text-foreground">Click to upload image</span>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
+                    </div>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="title">Product Title *</Label>
             <Input
@@ -193,34 +344,20 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="image_url">Image URL</Label>
-            <div className="flex gap-2">
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="https://example.com/image.jpg"
-                className="bg-secondary/50"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">Paste a URL to your product image</p>
-          </div>
-
           <div className="pt-4 flex gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               className="flex-1"
-              disabled={isLoading}
+              disabled={isLoading || isUploading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               className="flex-1 bg-gradient-primary hover:opacity-90"
-              disabled={isLoading}
+              disabled={isLoading || isUploading}
             >
               {isLoading ? (
                 <>
