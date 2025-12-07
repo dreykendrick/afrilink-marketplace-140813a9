@@ -5,15 +5,23 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { ShoppingCart, ArrowLeft } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
+import { z } from 'zod';
 
 interface SignupPageProps {
   onNavigate: (view: string) => void;
   onSignupSuccess: (userId: string) => void;
 }
 
+const signupSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+});
+
 export const SignupPage = ({ onNavigate, onSignupSuccess }: SignupPageProps) => {
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -22,21 +30,14 @@ export const SignupPage = ({ onNavigate, onSignupSuccess }: SignupPageProps) => 
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !password || !fullName) {
-      toast({ 
-        title: 'Error', 
-        description: 'Please fill in all fields',
-        variant: 'destructive' 
-      });
-      return;
-    }
 
-    if (password.length < 6) {
-      toast({ 
-        title: 'Error', 
-        description: 'Password must be at least 6 characters',
-        variant: 'destructive' 
+    // Validate inputs
+    const validation = signupSchema.safeParse({ email, password, fullName });
+    if (!validation.success) {
+      toast({
+        title: 'Validation Error',
+        description: validation.error.errors[0].message,
+        variant: 'destructive',
       });
       return;
     }
@@ -54,7 +55,22 @@ export const SignupPage = ({ onNavigate, onSignupSuccess }: SignupPageProps) => 
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('User already registered')) {
+          toast({
+            title: 'Account Exists',
+            description: 'An account with this email already exists. Please sign in instead.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Signup Failed',
+            description: error.message,
+            variant: 'destructive',
+          });
+        }
+        return;
+      }
 
       if (data.user) {
         // Create user role
@@ -62,20 +78,38 @@ export const SignupPage = ({ onNavigate, onSignupSuccess }: SignupPageProps) => 
           .from('user_roles')
           .insert({ user_id: data.user.id, role });
 
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.error('Role creation error:', roleError);
+          // Don't block signup if role creation fails - can be fixed later
+        }
 
-        toast({ 
-          title: 'Success', 
-          description: 'Account created! Please complete verification.' 
+        // Create application for approval
+        const { error: appError } = await supabase
+          .from('applications')
+          .insert({
+            user_id: data.user.id,
+            email,
+            full_name: fullName,
+            role,
+            status: 'pending'
+          });
+
+        if (appError) {
+          console.error('Application creation error:', appError);
+        }
+
+        toast({
+          title: 'Account Created!',
+          description: 'Please complete your verification.',
         });
-        
+
         onSignupSuccess(data.user.id);
       }
     } catch (error: any) {
-      toast({ 
-        title: 'Error', 
-        description: error.message,
-        variant: 'destructive' 
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -147,13 +181,20 @@ export const SignupPage = ({ onNavigate, onSignupSuccess }: SignupPageProps) => 
               </Select>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                'Create Account'
+              )}
             </Button>
             <div className="text-center text-sm">
               Already have an account?{' '}
-              <Button 
-                variant="link" 
-                className="p-0" 
+              <Button
+                variant="link"
+                className="p-0"
                 onClick={() => onNavigate('login')}
               >
                 Sign In
