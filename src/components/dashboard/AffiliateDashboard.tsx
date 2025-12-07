@@ -1,4 +1,4 @@
-import { DollarSign, Eye, CheckCircle, TrendingUp, Link2 } from 'lucide-react';
+import { DollarSign, Eye, CheckCircle, TrendingUp, Link2, Images } from 'lucide-react';
 import { User, Product, AffiliateStats } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import { StatsCard } from './StatsCard';
@@ -41,7 +41,15 @@ export const AffiliateDashboard = ({ currentUser, products, stats, onGenerateLin
               className="bg-secondary/50 rounded-lg sm:rounded-xl overflow-hidden border border-border hover:border-primary transition-all duration-300 hover:scale-105 animate-in fade-in zoom-in-95 duration-500"
               style={{ animationDelay: `${300 + index * 100}ms` }}
             >
-              <img src={product.image} alt={product.title} className="w-full h-28 sm:h-32 object-cover" />
+              <div className="relative">
+                <img src={product.image} alt={product.title} className="w-full h-28 sm:h-32 object-cover" />
+                {product.imageCount && product.imageCount > 1 && (
+                  <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-full">
+                    <Images className="w-3 h-3 text-white" />
+                    <span className="text-xs text-white font-medium">{product.imageCount}</span>
+                  </div>
+                )}
+              </div>
               <div className="p-3 sm:p-4">
                 <h3 className="font-bold text-foreground mb-2 text-sm sm:text-base">{product.title}</h3>
                 <div className="flex justify-between items-center mb-3">

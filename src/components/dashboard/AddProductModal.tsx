@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Upload, Loader2, ImagePlus, Trash2 } from 'lucide-react';
+import { X, Upload, Loader2, ImagePlus, Trash2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,98 +27,122 @@ const categories = [
   'Other'
 ];
 
+const MAX_IMAGES = 5;
+
 export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductModalProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
     commission: '10',
     category: '',
-    image_url: ''
+    image_urls: [] as string[]
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+    const remainingSlots = MAX_IMAGES - imagePreviews.length;
+    if (remainingSlots <= 0) {
       toast({
-        title: 'Invalid file',
-        description: 'Please select an image file',
+        title: 'Maximum images reached',
+        description: `You can only upload up to ${MAX_IMAGES} images`,
         variant: 'destructive'
       });
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: 'File too large',
-        description: 'Please select an image under 5MB',
-        variant: 'destructive'
-      });
-      return;
-    }
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
 
-    setIsUploading(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+    for (const file of filesToUpload) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
         toast({
-          title: 'Not authenticated',
-          description: 'Please log in to upload images',
+          title: 'Invalid file',
+          description: 'Please select image files only',
           variant: 'destructive'
         });
-        return;
+        continue;
       }
 
-      // Create unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'File too large',
+          description: `${file.name} is larger than 5MB`,
+          variant: 'destructive'
+        });
+        continue;
+      }
 
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, file);
+      setIsUploading(true);
 
-      if (error) throw error;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast({
+            title: 'Not authenticated',
+            description: 'Please log in to upload images',
+            variant: 'destructive'
+          });
+          return;
+        }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(fileName);
+        // Create unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      setFormData({ ...formData, image_url: publicUrl });
-      setImagePreview(publicUrl);
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, file);
 
-      toast({
-        title: 'Image uploaded!',
-        description: 'Your product image is ready'
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Upload failed',
-        description: error.message || 'Failed to upload image',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsUploading(false);
+        if (error) throw error;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+
+        setFormData(prev => ({ 
+          ...prev, 
+          image_urls: [...prev.image_urls, publicUrl] 
+        }));
+        setImagePreviews(prev => [...prev, publicUrl]);
+
+      } catch (error: any) {
+        toast({
+          title: 'Upload failed',
+          description: error.message || 'Failed to upload image',
+          variant: 'destructive'
+        });
+      }
     }
-  };
 
-  const removeImage = () => {
-    setImagePreview(null);
-    setFormData({ ...formData, image_url: '' });
+    setIsUploading(false);
+    toast({
+      title: 'Images uploaded!',
+      description: 'Your product images are ready'
+    });
+
+    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      image_urls: prev.image_urls.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,7 +178,8 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         price: Math.round(parseFloat(formData.price) * 100),
         commission: parseInt(formData.commission),
         category: formData.category,
-        image_url: formData.image_url || null
+        image_url: formData.image_urls[0] || null,
+        image_urls: formData.image_urls
       });
 
       if (error) throw error;
@@ -171,9 +196,9 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         price: '',
         commission: '10',
         category: '',
-        image_url: ''
+        image_urls: []
       });
-      setImagePreview(null);
+      setImagePreviews([]);
       
       onProductAdded();
       onClose();
@@ -208,50 +233,64 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           {/* Image Upload Section */}
           <div className="space-y-2">
-            <Label>Product Image</Label>
+            <Label>Product Images ({imagePreviews.length}/{MAX_IMAGES})</Label>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageUpload}
               className="hidden"
             />
             
-            {imagePreview ? (
-              <div className="relative group">
-                <img
-                  src={imagePreview}
-                  alt="Product preview"
-                  className="w-full h-48 object-cover rounded-xl border border-border"
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-3">
-                  <Button
+            <div className="grid grid-cols-3 gap-3">
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative group aspect-square">
+                  <img
+                    src={preview}
+                    alt={`Product preview ${index + 1}`}
+                    className="w-full h-full object-cover rounded-xl border border-border"
+                  />
+                  <button
                     type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <Upload className="w-4 h-4 mr-1" />
-                    Change
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={removeImage}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Remove
-                  </Button>
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                  {index === 0 && (
+                    <span className="absolute bottom-1 left-1 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+                      Main
+                    </span>
+                  )}
                 </div>
-              </div>
-            ) : (
+              ))}
+              
+              {imagePreviews.length < MAX_IMAGES && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="aspect-square border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200"
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Add</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+            
+            {imagePreviews.length === 0 && (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="w-full h-48 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200"
+                className="w-full h-32 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200"
               >
                 {isUploading ? (
                   <>
@@ -260,12 +299,12 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
                   </>
                 ) : (
                   <>
-                    <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center">
-                      <ImagePlus className="w-7 h-7 text-muted-foreground" />
+                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                      <ImagePlus className="w-6 h-6 text-muted-foreground" />
                     </div>
                     <div className="text-center">
-                      <span className="text-sm font-medium text-foreground">Click to upload image</span>
-                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
+                      <span className="text-sm font-medium text-foreground">Click to upload images</span>
+                      <p className="text-xs text-muted-foreground mt-1">Up to {MAX_IMAGES} images, PNG/JPG, max 5MB each</p>
                     </div>
                   </>
                 )}

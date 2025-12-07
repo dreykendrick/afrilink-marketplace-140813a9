@@ -6,6 +6,8 @@ export interface Product {
   commission: number;
   category: string;
   image: string;
+  images?: string[];
+  imageCount?: number;
   status: 'approved' | 'pending' | 'rejected';
   sales: number;
 }
