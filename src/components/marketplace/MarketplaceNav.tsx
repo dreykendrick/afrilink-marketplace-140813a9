@@ -1,125 +1,115 @@
 import { useState } from 'react';
-import { ShoppingCart, Search, Users, LogOut, Home, Menu, X } from 'lucide-react';
-import { User } from '@/types';
+import { ShoppingCart, Search, X, Menu } from 'lucide-react';
+import { useCart } from '@/hooks/useCart';
 
 interface MarketplaceNavProps {
-  currentUser: User | null;
-  onLogout: () => void;
-  onGoHome: () => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
+  categories: string[];
+  onCartClick: () => void;
+  onLogin: () => void;
 }
 
-export const MarketplaceNav = ({ currentUser, onLogout, onGoHome }: MarketplaceNavProps) => {
+export const MarketplaceNav = ({ 
+  searchTerm, 
+  setSearchTerm, 
+  selectedCategory, 
+  setSelectedCategory, 
+  categories,
+  onCartClick,
+  onLogin
+}: MarketplaceNavProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const { totalItems } = useCart();
 
   return (
-    <nav className="bg-sidebar border-b border-sidebar-border sticky top-0 z-50 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16">
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow">
-              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
-            <span className="text-lg sm:text-xl font-bold text-foreground">AfriLink</span>
+    <nav className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-xl sm:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent whitespace-nowrap">
+            AfriLink
+          </h1>
+          
+          <div className="hidden md:flex flex-1 max-w-xl relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground transition-all"
+            />
           </div>
-
-          {/* Desktop Search */}
-          <div className="hidden md:block flex-1 max-w-xl mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Desktop Actions */}
-          <div className="hidden sm:flex items-center space-x-4">
-            <ShoppingCart className="w-6 h-6 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
-            {currentUser ? (
-              <>
-                <div className="flex items-center space-x-2 px-4 py-2 bg-secondary rounded-lg">
-                  <Users className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">{currentUser.name}</span>
-                </div>
-                <button onClick={onLogout} className="text-muted-foreground hover:text-foreground transition-colors">
-                  <LogOut className="w-5 h-5" />
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={onGoHome}
-                className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
-              >
-                <Home className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Back to Home</span>
-              </button>
-            )}
-          </div>
-
-          {/* Mobile Actions */}
-          <div className="flex sm:hidden items-center space-x-2">
+          
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 text-muted-foreground"
+              onClick={onCartClick}
+              className="relative p-2 sm:p-3 bg-secondary hover:bg-secondary/80 rounded-xl transition-colors"
             >
-              <Search className="w-5 h-5" />
+              <ShoppingCart className="w-5 h-5 text-foreground" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center font-bold">
+                  {totalItems}
+                </span>
+              )}
             </button>
-            <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+            <button 
+              onClick={onLogin}
+              className="hidden sm:block px-4 py-2 bg-gradient-primary text-white rounded-xl font-semibold hover:shadow-glow transition-all duration-300"
+            >
+              Vendor/Affiliate
+            </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1 text-foreground"
+              className="md:hidden p-2 bg-secondary rounded-xl"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
-        {searchOpen && (
-          <div className="sm:hidden py-3 border-t border-sidebar-border animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full pl-9 pr-4 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary"
-                autoFocus
-              />
-            </div>
+        {/* Mobile search */}
+        <div className="md:hidden mt-4 relative">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-secondary border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+          />
+        </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-4 p-4 bg-card rounded-xl border border-border animate-in fade-in slide-in-from-top-2 duration-200">
+            <button 
+              onClick={onLogin}
+              className="w-full px-4 py-3 bg-gradient-primary text-white rounded-xl font-semibold mb-4"
+            >
+              Vendor/Affiliate Login
+            </button>
           </div>
         )}
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="sm:hidden py-4 space-y-3 border-t border-sidebar-border animate-in fade-in slide-in-from-top-2 duration-200">
-            {currentUser ? (
-              <>
-                <div className="flex items-center space-x-3 px-3 py-3 bg-secondary rounded-lg">
-                  <Users className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">{currentUser.name}</span>
-                </div>
-                <button
-                  onClick={() => { onLogout(); setMobileMenuOpen(false); }}
-                  className="w-full flex items-center justify-center space-x-2 py-3 text-red-400 bg-red-400/10 rounded-lg"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => { onGoHome(); setMobileMenuOpen(false); }}
-                className="w-full flex items-center justify-center space-x-2 py-3 bg-secondary rounded-lg"
-              >
-                <Home className="w-4 h-4 text-muted-foreground" />
-                <span className="text-foreground">Back to Home</span>
-              </button>
-            )}
-          </div>
-        )}
+        {/* Categories */}
+        <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                selectedCategory === category
+                  ? 'bg-gradient-primary text-white shadow-glow'
+                  : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
       </div>
     </nav>
   );
