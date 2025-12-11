@@ -58,82 +58,84 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
       return;
     }
 
-    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    // Get user once before uploads
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: 'Not authenticated',
+        description: 'Please log in to upload images',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-    for (const file of filesToUpload) {
-      // Validate file type
+    // Filter and validate files
+    const validFiles = Array.from(files).slice(0, remainingSlots).filter(file => {
       if (!file.type.startsWith('image/')) {
         toast({
           title: 'Invalid file',
-          description: 'Please select image files only',
+          description: `${file.name} is not an image`,
           variant: 'destructive'
         });
-        continue;
+        return false;
       }
-
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast({
           title: 'File too large',
           description: `${file.name} is larger than 5MB`,
           variant: 'destructive'
         });
-        continue;
+        return false;
       }
-
-      setIsUploading(true);
-
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          toast({
-            title: 'Not authenticated',
-            description: 'Please log in to upload images',
-            variant: 'destructive'
-          });
-          return;
-        }
-
-        // Create unique filename
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-        // Upload to Supabase Storage
-        const { data, error } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, file);
-
-        if (error) throw error;
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(fileName);
-
-        setFormData(prev => ({ 
-          ...prev, 
-          image_urls: [...prev.image_urls, publicUrl] 
-        }));
-        setImagePreviews(prev => [...prev, publicUrl]);
-
-      } catch (error: any) {
-        toast({
-          title: 'Upload failed',
-          description: error.message || 'Failed to upload image',
-          variant: 'destructive'
-        });
-      }
-    }
-
-    setIsUploading(false);
-    toast({
-      title: 'Images uploaded!',
-      description: 'Your product images are ready'
+      return true;
     });
 
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (validFiles.length === 0) return;
+
+    setIsUploading(true);
+
+    // Upload all images in parallel
+    const uploadPromises = validFiles.map(async (file) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    });
+
+    try {
+      const uploadedUrls = await Promise.all(uploadPromises);
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        image_urls: [...prev.image_urls, ...uploadedUrls] 
+      }));
+      setImagePreviews(prev => [...prev, ...uploadedUrls]);
+
+      toast({
+        title: 'Images uploaded!',
+        description: `${uploadedUrls.length} image(s) ready`
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload images',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
