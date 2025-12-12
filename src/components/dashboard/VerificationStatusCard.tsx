@@ -18,10 +18,20 @@ interface VerificationStatus {
 export const VerificationStatusCard = ({ onVerify }: VerificationStatusCardProps) => {
   const [status, setStatus] = useState<VerificationStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     fetchVerificationStatus();
   }, []);
+
+  // Auto-hide fully verified card after 2 minutes
+  useEffect(() => {
+    const isFullyVerified = status?.email_verified && status?.phone_verified && status?.photo_verified;
+    if (isFullyVerified) {
+      const timer = setTimeout(() => setHidden(true), 2 * 60 * 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   const fetchVerificationStatus = async () => {
     try {
@@ -60,6 +70,11 @@ export const VerificationStatusCard = ({ onVerify }: VerificationStatusCardProps
     { label: 'Phone', verified: status?.phone_verified, icon: Phone },
     { label: 'Photo ID', verified: status?.photo_verified, icon: Camera },
   ];
+
+  // Hide completely if fully verified and timer expired
+  if (isFullyVerified && hidden) {
+    return null;
+  }
 
   if (isFullyVerified) {
     return (
