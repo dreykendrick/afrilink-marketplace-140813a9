@@ -100,14 +100,14 @@ export const LandingPage = ({ products, onNavigate, onLogin }: LandingPageProps)
             </button>
             <button
               onClick={() => onNavigate('signup')}
-              className="px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm text-foreground rounded-xl font-semibold hover:bg-white/20 transition-all duration-300 flex items-center justify-center space-x-2 border border-white/20 group"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-primary text-white rounded-xl font-semibold hover:shadow-glow transition-all duration-300 flex items-center justify-center space-x-2 group"
             >
               <TrendingUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <span>Become Affiliate</span>
             </button>
             <button
               onClick={() => onNavigate('marketplace')}
-              className="px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm text-foreground rounded-xl font-semibold hover:bg-white/20 transition-all duration-300 flex items-center justify-center space-x-2 border border-white/20 group"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-primary text-white rounded-xl font-semibold hover:shadow-glow transition-all duration-300 flex items-center justify-center space-x-2 group"
             >
               <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <span>Browse Products</span>
