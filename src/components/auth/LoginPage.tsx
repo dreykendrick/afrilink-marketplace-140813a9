@@ -154,12 +154,18 @@ export const LoginPage = ({ onNavigate }: LoginPageProps) => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 flex items-center justify-between">
             <button
               onClick={() => onNavigate('landing')}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               ← Back to Home
+            </button>
+            <button
+              onClick={() => onNavigate('forgot-password')}
+              className="text-sm text-primary hover:underline"
+            >
+              Forgot Password?
             </button>
           </div>
 
