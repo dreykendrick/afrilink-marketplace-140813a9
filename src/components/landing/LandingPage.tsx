@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { ShoppingCart, DollarSign, Link2, Wallet, Package, TrendingUp, Menu, X } from 'lucide-react';
+import { ShoppingCart, DollarSign, Link2, Wallet, Package, TrendingUp, User } from 'lucide-react';
 import { Product } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 
@@ -10,7 +9,6 @@ interface LandingPageProps {
 }
 
 export const LandingPage = ({ products, onNavigate, onLogin }: LandingPageProps) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const features = [
     {
@@ -50,32 +48,15 @@ export const LandingPage = ({ products, onNavigate, onLogin }: LandingPageProps)
               Sign In
             </button>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Sign In Button */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="sm:hidden p-2 text-foreground"
+              onClick={() => onNavigate('login')}
+              className="sm:hidden p-2 bg-gradient-primary rounded-full text-white hover:shadow-glow transition-all duration-300"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <User className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="sm:hidden py-4 space-y-3 border-t border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
-              <button
-                onClick={() => { onNavigate('login'); setMobileMenuOpen(false); }}
-                className="w-full py-3 bg-gradient-primary text-white rounded-lg font-semibold"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => { onNavigate('signup'); setMobileMenuOpen(false); }}
-                className="w-full py-3 bg-white/10 text-foreground rounded-lg font-semibold border border-white/20"
-              >
-                Sign Up
-              </button>
-            </div>
-          )}
         </div>
       </nav>
 
