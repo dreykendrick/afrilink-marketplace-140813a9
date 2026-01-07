@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { LandingPage } from '@/components/landing/LandingPage';
 import { LoginPage } from '@/components/auth/LoginPage';
 import { SignupPage } from '@/components/auth/SignupPage';
+import { ForgotPasswordPage } from '@/components/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/components/auth/ResetPasswordPage';
 import { VerificationForm } from '@/components/auth/VerificationForm';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
 import { VendorDashboard } from '@/components/dashboard/VendorDashboard';
@@ -19,7 +21,7 @@ import { User, Product, VendorStats, AffiliateStats } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type View = 'landing' | 'login' | 'signup' | 'verification' | 'dashboard' | 'marketplace';
+type View = 'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'verification' | 'dashboard' | 'marketplace';
 
 const IndexContent = () => {
   const { user, loading: authLoading, userRole, signOut } = useAuth();
@@ -44,10 +46,17 @@ const IndexContent = () => {
   const [affiliateLinks, setAffiliateLinks] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
 
-  // Check for affiliate code in URL
+  // Check for affiliate code and password reset in URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
+    
+    // Check if this is a password reset redirect
+    if (window.location.pathname === '/reset-password') {
+      setView('reset-password');
+      return;
+    }
+    
     if (ref) {
       setAffiliateCode(ref);
       // Track click
@@ -358,6 +367,24 @@ const IndexContent = () => {
             setView('verification');
           }}
         />
+        {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
+      </>
+    );
+  }
+
+  if (view === 'forgot-password') {
+    return (
+      <>
+        <ForgotPasswordPage onNavigate={handleNavigate} />
+        {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
+      </>
+    );
+  }
+
+  if (view === 'reset-password') {
+    return (
+      <>
+        <ResetPasswordPage onNavigate={handleNavigate} />
         {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
       </>
     );
