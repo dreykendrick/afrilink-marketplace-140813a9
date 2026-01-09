@@ -64,8 +64,20 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
 
     setUploading(true);
     try {
+      // Verify user is authenticated before upload
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ 
+          title: 'Authentication Required', 
+          description: 'Please sign in again to upload your verification photo.', 
+          variant: 'destructive' 
+        });
+        setUploading(false);
+        return;
+      }
+
       const fileExt = photoFile.name.split('.').pop();
-      const fileName = `${userId}/verification.${fileExt}`;
+      const fileName = `${session.user.id}/verification.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('verification-photos')
@@ -83,14 +95,15 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
           verification_photo_url: publicUrl,
           photo_verified: true 
         })
-        .eq('id', userId);
+        .eq('id', session.user.id);
 
       if (updateError) throw updateError;
 
       setPhotoUploaded(true);
       toast({ title: 'Success', description: 'Photo uploaded successfully!' });
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      console.error('Photo upload error:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to upload photo', variant: 'destructive' });
     } finally {
       setUploading(false);
     }
