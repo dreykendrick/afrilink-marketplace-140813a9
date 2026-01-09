@@ -18,6 +18,7 @@ export interface User {
   email: string;
   role: 'vendor' | 'affiliate' | 'consumer';
   wallet: number;
+  verified?: boolean;
 }
 
 export interface Application {
