@@ -149,10 +149,12 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleSubmit called with formData:', formData);
+    console.log('=== PRODUCT SUBMIT START ===');
+    console.log('Form data:', formData);
     
+    // Validate required fields
     if (!formData.title || !formData.price || !formData.category) {
-      console.log('Validation failed - missing fields:', { title: formData.title, price: formData.price, category: formData.category });
+      console.log('Validation failed - missing fields');
       toast({
         title: 'Missing fields',
         description: 'Please fill in all required fields',
@@ -162,46 +164,64 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
     }
 
     setIsLoading(true);
-    console.log('Starting product creation...');
 
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Session result:', { session: session?.user?.id, sessionError });
+      // Get current session
+      let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Initial session check:', { userId: session?.user?.id, error: sessionError?.message });
       
-      if (sessionError || !session?.user) {
-        console.error('Authentication failed:', sessionError);
-        toast({
-          title: 'Not authenticated',
-          description: 'Please log in to add products',
-          variant: 'destructive'
-        });
-        setIsLoading(false);
-        return;
+      // If no session, try to refresh
+      if (!session?.user) {
+        console.log('No session found, attempting refresh...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError || !refreshData.session?.user) {
+          console.error('Session refresh failed:', refreshError);
+          toast({
+            title: 'Session expired',
+            description: 'Please log in again to add products',
+            variant: 'destructive'
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        session = refreshData.session;
+        console.log('Session refreshed successfully:', session.user.id);
       }
 
-      const user = session.user;
-      console.log('User authenticated:', user.id);
+      const userId = session.user.id;
+      console.log('Proceeding with user ID:', userId);
 
+      // Prepare product data
       const productData = {
-        vendor_id: user.id,
-        title: formData.title,
-        description: formData.description,
+        vendor_id: userId,
+        title: formData.title.trim(),
+        description: formData.description?.trim() || null,
         price: Math.round(parseFloat(formData.price) * 100),
-        commission: parseInt(formData.commission),
+        commission: parseInt(formData.commission) || 10,
         category: formData.category,
         image_url: formData.image_urls[0] || null,
         image_urls: formData.image_urls,
         status: 'pending'
       };
+      
       console.log('Inserting product:', productData);
 
-      const { data, error } = await supabase.from('products').insert(productData).select();
-      console.log('Insert result:', { data, error });
+      const { data, error } = await supabase
+        .from('products')
+        .insert(productData)
+        .select()
+        .single();
+
+      console.log('Insert response:', { data, error });
 
       if (error) {
-        console.error('Product insert error:', error);
-        throw error;
+        console.error('Product insert failed:', error);
+        throw new Error(error.message || 'Failed to create product');
       }
+
+      console.log('=== PRODUCT CREATED SUCCESSFULLY ===', data);
 
       toast({
         title: 'Product added!',
@@ -222,9 +242,10 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
       onProductAdded();
       onClose();
     } catch (error: any) {
+      console.error('=== PRODUCT SUBMIT ERROR ===', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to add product',
+        title: 'Error adding product',
+        description: error.message || 'Failed to add product. Please try again.',
         variant: 'destructive'
       });
     } finally {
