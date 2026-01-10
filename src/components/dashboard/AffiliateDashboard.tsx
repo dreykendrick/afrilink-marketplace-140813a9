@@ -3,8 +3,6 @@ import { User, Product, AffiliateStats } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import { StatsCard } from './StatsCard';
 import { WalletCard } from './WalletCard';
-import { VerificationStatusCard } from './VerificationStatusCard';
-
 interface AffiliateDashboardProps {
   currentUser: User;
   products: Product[];
@@ -19,10 +17,6 @@ export const AffiliateDashboard = ({ currentUser, products, stats, onGenerateLin
       <div className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-top-3 duration-500">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Welcome back, {currentUser.name}!</h1>
         <p className="text-sm sm:text-base text-muted-foreground">Here's your affiliate dashboard overview</p>
-      </div>
-
-      <div className="mb-6 sm:mb-8">
-        <VerificationStatusCard onVerify={onVerify} />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">

@@ -4,9 +4,7 @@ import { User, Product, VendorStats } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import { StatsCard } from './StatsCard';
 import { WalletCard } from './WalletCard';
-import { VerificationStatusCard } from './VerificationStatusCard';
 import { AddProductModal } from './AddProductModal';
-
 interface VendorDashboardProps {
   currentUser: User;
   products: Product[];
@@ -29,9 +27,6 @@ export const VendorDashboard = ({ currentUser, products, stats, onVerify, onProd
         <p className="text-sm sm:text-base text-muted-foreground">Here's your vendor dashboard overview</p>
       </div>
 
-      <div className="mb-6 sm:mb-8">
-        <VerificationStatusCard onVerify={onVerify} />
-      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <StatsCard icon={DollarSign} value={formatCurrency(stats.revenue)} label="Total Revenue" gradient="from-afrilink-green to-emerald-600" />
