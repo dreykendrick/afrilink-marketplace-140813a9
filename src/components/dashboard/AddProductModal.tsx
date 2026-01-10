@@ -162,16 +162,19 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
     setIsLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!user) {
+      if (sessionError || !session?.user) {
         toast({
           title: 'Not authenticated',
           description: 'Please log in to add products',
           variant: 'destructive'
         });
+        setIsLoading(false);
         return;
       }
+
+      const user = session.user;
 
       const { error } = await supabase.from('products').insert({
         vendor_id: user.id,
@@ -181,10 +184,14 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         commission: parseInt(formData.commission),
         category: formData.category,
         image_url: formData.image_urls[0] || null,
-        image_urls: formData.image_urls
+        image_urls: formData.image_urls,
+        status: 'pending'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Product insert error:', error);
+        throw error;
+      }
 
       toast({
         title: 'Product added!',
