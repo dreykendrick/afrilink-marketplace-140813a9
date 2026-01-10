@@ -149,8 +149,10 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit called with formData:', formData);
     
     if (!formData.title || !formData.price || !formData.category) {
+      console.log('Validation failed - missing fields:', { title: formData.title, price: formData.price, category: formData.category });
       toast({
         title: 'Missing fields',
         description: 'Please fill in all required fields',
@@ -160,11 +162,14 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
     }
 
     setIsLoading(true);
+    console.log('Starting product creation...');
 
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session result:', { session: session?.user?.id, sessionError });
       
       if (sessionError || !session?.user) {
+        console.error('Authentication failed:', sessionError);
         toast({
           title: 'Not authenticated',
           description: 'Please log in to add products',
@@ -175,8 +180,9 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
       }
 
       const user = session.user;
+      console.log('User authenticated:', user.id);
 
-      const { error } = await supabase.from('products').insert({
+      const productData = {
         vendor_id: user.id,
         title: formData.title,
         description: formData.description,
@@ -186,7 +192,11 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         image_url: formData.image_urls[0] || null,
         image_urls: formData.image_urls,
         status: 'pending'
-      });
+      };
+      console.log('Inserting product:', productData);
+
+      const { data, error } = await supabase.from('products').insert(productData).select();
+      console.log('Insert result:', { data, error });
 
       if (error) {
         console.error('Product insert error:', error);
