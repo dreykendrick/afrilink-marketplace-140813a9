@@ -149,28 +149,67 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent double-tap issues on mobile
+    if (isLoading) {
+      console.log('Already loading, preventing duplicate submission');
+      return;
+    }
+    
     console.log('=== PRODUCT SUBMIT START ===');
     console.log('Form data:', formData);
     
-    // Validate required fields
-    if (!formData.title || !formData.price || !formData.category) {
-      console.log('Validation failed - missing fields');
+    // Validate required fields with better feedback
+    const missingFields: string[] = [];
+    if (!formData.title?.trim()) missingFields.push('Title');
+    if (!formData.price || parseFloat(formData.price) <= 0) missingFields.push('Price');
+    if (!formData.category) missingFields.push('Category');
+    
+    if (missingFields.length > 0) {
+      console.log('Validation failed - missing fields:', missingFields);
       toast({
         title: 'Missing fields',
-        description: 'Please fill in all required fields',
+        description: `Please fill in: ${missingFields.join(', ')}`,
         variant: 'destructive'
       });
       return;
     }
 
     setIsLoading(true);
+    console.log('Loading state set to true');
 
     try {
-      // Get current session
+      // Get current session - critical for mobile where sessions can expire
+      console.log('Getting session...');
       let { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Initial session check:', { userId: session?.user?.id, error: sessionError?.message });
+      console.log('Initial session check:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id, 
+        error: sessionError?.message 
+      });
       
-      // If no session, try to refresh
+      // If session error, try to refresh
+      if (sessionError) {
+        console.log('Session error, attempting refresh...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError || !refreshData.session?.user) {
+          console.error('Session refresh failed:', refreshError);
+          toast({
+            title: 'Session expired',
+            description: 'Please log in again to add products',
+            variant: 'destructive'
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        session = refreshData.session;
+        console.log('Session refreshed successfully');
+      }
+      
+      // If still no session, try one more refresh
       if (!session?.user) {
         console.log('No session found, attempting refresh...');
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
@@ -193,20 +232,23 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
       const userId = session.user.id;
       console.log('Proceeding with user ID:', userId);
 
-      // Prepare product data
+      // Prepare product data - ensure all values are properly formatted
+      const priceValue = parseFloat(formData.price);
+      const commissionValue = parseInt(formData.commission) || 10;
+      
       const productData = {
         vendor_id: userId,
         title: formData.title.trim(),
         description: formData.description?.trim() || null,
-        price: Math.round(parseFloat(formData.price) * 100),
-        commission: parseInt(formData.commission) || 10,
+        price: Math.round(priceValue * 100),
+        commission: commissionValue,
         category: formData.category,
         image_url: formData.image_urls[0] || null,
-        image_urls: formData.image_urls,
+        image_urls: formData.image_urls.length > 0 ? formData.image_urls : null,
         status: 'pending'
       };
       
-      console.log('Inserting product:', productData);
+      console.log('Inserting product with data:', JSON.stringify(productData));
 
       const { data, error } = await supabase
         .from('products')
@@ -214,14 +256,14 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         .select()
         .single();
 
-      console.log('Insert response:', { data, error });
+      console.log('Insert response:', { success: !!data, error: error?.message });
 
       if (error) {
         console.error('Product insert failed:', error);
         throw new Error(error.message || 'Failed to create product');
       }
 
-      console.log('=== PRODUCT CREATED SUCCESSFULLY ===', data);
+      console.log('=== PRODUCT CREATED SUCCESSFULLY ===', data.id);
 
       toast({
         title: 'Product added!',
@@ -249,6 +291,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         variant: 'destructive'
       });
     } finally {
+      console.log('Setting loading to false');
       setIsLoading(false);
     }
   };
@@ -435,13 +478,17 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-gradient-primary hover:opacity-90"
+              className="flex-1 bg-gradient-primary hover:opacity-90 touch-manipulation"
               disabled={isLoading || isUploading}
+              onClick={(e) => {
+                // Ensure button click triggers form submit on mobile
+                console.log('Submit button clicked');
+              }}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Adding...
+                  Creating...
                 </>
               ) : (
                 'Add Product'
