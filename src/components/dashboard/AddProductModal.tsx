@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react';
-import { X, Upload, Loader2, ImagePlus, Trash2, Plus } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { X, Loader2, ImagePlus, Trash2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,26 +30,61 @@ const categories = [
 
 const MAX_IMAGES = 5;
 
+interface FormData {
+  title: string;
+  description: string;
+  price: string;
+  commission: string;
+  category: string;
+  image_urls: string[];
+}
+
+const initialFormData: FormData = {
+  title: '',
+  description: '',
+  price: '',
+  commission: '10',
+  category: '',
+  image_urls: []
+};
+
 export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductModalProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  
+  // Store image previews separately to persist across re-renders
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    price: '',
-    commission: '10',
-    category: '',
-    image_urls: [] as string[]
-  });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Small delay to allow animation to complete before resetting
+      const timer = setTimeout(() => {
+        setFormData(initialFormData);
+        setImagePreviews([]);
+        setIsLoading(false);
+        setIsUploading(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    console.log('=== IMAGE UPLOAD START ===', { filesCount: files?.length });
+    
+    if (!files || files.length === 0) {
+      console.log('No files selected');
+      return;
+    }
 
-    const remainingSlots = MAX_IMAGES - imagePreviews.length;
+    const currentImageCount = imagePreviews.length;
+    const remainingSlots = MAX_IMAGES - currentImageCount;
+    console.log('Remaining slots:', remainingSlots);
+    
     if (remainingSlots <= 0) {
       toast({
         title: 'Maximum images reached',
@@ -58,74 +94,119 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
       return;
     }
 
-    // Get user once before uploads
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: 'Not authenticated',
-        description: 'Please log in to upload images',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    // Filter and validate files
-    const validFiles = Array.from(files).slice(0, remainingSlots).filter(file => {
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: 'Invalid file',
-          description: `${file.name} is not an image`,
-          variant: 'destructive'
-        });
-        return false;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: 'File too large',
-          description: `${file.name} is larger than 5MB`,
-          variant: 'destructive'
-        });
-        return false;
-      }
-      return true;
-    });
-
-    if (validFiles.length === 0) return;
-
     setIsUploading(true);
 
-    // Upload all images in parallel
-    const uploadPromises = validFiles.map(async (file) => {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-      const { error } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, file);
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    });
-
     try {
-      const uploadedUrls = await Promise.all(uploadPromises);
+      // Get user session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session check:', { hasSession: !!session, error: sessionError?.message });
       
-      setFormData(prev => ({ 
-        ...prev, 
-        image_urls: [...prev.image_urls, ...uploadedUrls] 
-      }));
-      setImagePreviews(prev => [...prev, ...uploadedUrls]);
+      if (sessionError || !session?.user) {
+        // Try to refresh session
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshData.session?.user) {
+          toast({
+            title: 'Not authenticated',
+            description: 'Please log in to upload images',
+            variant: 'destructive'
+          });
+          setIsUploading(false);
+          return;
+        }
+      }
 
-      toast({
-        title: 'Images uploaded!',
-        description: `${uploadedUrls.length} image(s) ready`
+      const userId = session?.user?.id || (await supabase.auth.getSession()).data.session?.user?.id;
+      
+      if (!userId) {
+        toast({
+          title: 'Not authenticated',
+          description: 'Please log in to upload images',
+          variant: 'destructive'
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Filter and validate files
+      const validFiles = Array.from(files).slice(0, remainingSlots).filter(file => {
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: 'Invalid file',
+            description: `${file.name} is not an image`,
+            variant: 'destructive'
+          });
+          return false;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: 'File too large',
+            description: `${file.name} is larger than 5MB`,
+            variant: 'destructive'
+          });
+          return false;
+        }
+        return true;
       });
+
+      console.log('Valid files to upload:', validFiles.length);
+
+      if (validFiles.length === 0) {
+        setIsUploading(false);
+        return;
+      }
+
+      // Upload all images
+      const uploadedUrls: string[] = [];
+      
+      for (const file of validFiles) {
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        console.log('Uploading file:', fileName);
+
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast({
+            title: 'Upload failed',
+            description: uploadError.message || 'Failed to upload image',
+            variant: 'destructive'
+          });
+          continue;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+
+        console.log('Uploaded successfully:', publicUrl);
+        uploadedUrls.push(publicUrl);
+      }
+
+      if (uploadedUrls.length > 0) {
+        // Update state with new images
+        setFormData(prev => {
+          const newUrls = [...prev.image_urls, ...uploadedUrls];
+          console.log('Updated image_urls:', newUrls);
+          return { ...prev, image_urls: newUrls };
+        });
+        
+        setImagePreviews(prev => {
+          const newPreviews = [...prev, ...uploadedUrls];
+          console.log('Updated imagePreviews:', newPreviews);
+          return newPreviews;
+        });
+
+        toast({
+          title: 'Images uploaded!',
+          description: `${uploadedUrls.length} image(s) ready`
+        });
+      }
     } catch (error: any) {
+      console.error('Image upload error:', error);
       toast({
         title: 'Upload failed',
         description: error.message || 'Failed to upload images',
@@ -133,25 +214,25 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
       });
     } finally {
       setIsUploading(false);
+      // Clear the input value so the same file can be selected again
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
-  };
+  }, [imagePreviews.length, toast]);
 
-  const removeImage = (index: number) => {
+  const removeImage = useCallback((index: number) => {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
     setFormData(prev => ({
       ...prev,
       image_urls: prev.image_urls.filter((_, i) => i !== index)
     }));
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Prevent double-tap issues on mobile
     if (isLoading) {
       console.log('Already loading, preventing duplicate submission');
       return;
@@ -159,8 +240,9 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
     
     console.log('=== PRODUCT SUBMIT START ===');
     console.log('Form data:', formData);
+    console.log('Image previews:', imagePreviews);
     
-    // Validate required fields with better feedback
+    // Validate required fields
     const missingFields: string[] = [];
     if (!formData.title?.trim()) missingFields.push('Title');
     if (!formData.price || parseFloat(formData.price) <= 0) missingFields.push('Price');
@@ -180,7 +262,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
     console.log('Loading state set to true');
 
     try {
-      // Get current session - critical for mobile where sessions can expire
+      // Get current session
       console.log('Getting session...');
       let { data: { session }, error: sessionError } = await supabase.auth.getSession();
       console.log('Initial session check:', { 
@@ -189,29 +271,9 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         error: sessionError?.message 
       });
       
-      // If session error, try to refresh
-      if (sessionError) {
-        console.log('Session error, attempting refresh...');
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-        
-        if (refreshError || !refreshData.session?.user) {
-          console.error('Session refresh failed:', refreshError);
-          toast({
-            title: 'Session expired',
-            description: 'Please log in again to add products',
-            variant: 'destructive'
-          });
-          setIsLoading(false);
-          return;
-        }
-        
-        session = refreshData.session;
-        console.log('Session refreshed successfully');
-      }
-      
-      // If still no session, try one more refresh
-      if (!session?.user) {
-        console.log('No session found, attempting refresh...');
+      // If session error or no session, try to refresh
+      if (sessionError || !session?.user) {
+        console.log('Session issue, attempting refresh...');
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         
         if (refreshError || !refreshData.session?.user) {
@@ -232,9 +294,12 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
       const userId = session.user.id;
       console.log('Proceeding with user ID:', userId);
 
-      // Prepare product data - ensure all values are properly formatted
+      // Prepare product data
       const priceValue = parseFloat(formData.price);
       const commissionValue = parseInt(formData.commission) || 10;
+      
+      // Use imagePreviews as fallback if formData.image_urls is empty
+      const imageUrls = formData.image_urls.length > 0 ? formData.image_urls : imagePreviews;
       
       const productData = {
         vendor_id: userId,
@@ -243,8 +308,8 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         price: Math.round(priceValue * 100),
         commission: commissionValue,
         category: formData.category,
-        image_url: formData.image_urls[0] || null,
-        image_urls: formData.image_urls.length > 0 ? formData.image_urls : null,
+        image_url: imageUrls[0] || null,
+        image_urls: imageUrls.length > 0 ? imageUrls : null,
         status: 'pending'
       };
       
@@ -270,17 +335,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
         description: 'Your product is pending review'
       });
 
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        price: '',
-        commission: '10',
-        category: '',
-        image_urls: []
-      });
-      setImagePreviews([]);
-      
+      // Close modal and notify parent
       onProductAdded();
       onClose();
     } catch (error: any) {
@@ -296,53 +351,42 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
     }
   };
 
-  if (!isOpen) return null;
+  const triggerFileInput = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Triggering file input');
+    // Use setTimeout to ensure the event is properly handled on mobile
+    setTimeout(() => {
+      fileInputRef.current?.click();
+    }, 100);
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm" 
-        onClick={onClose}
-        onTouchEnd={(e) => {
-          // Only close if the touch target is the backdrop itself
-          if (e.target === e.currentTarget) {
-            onClose();
-          }
-        }}
-      />
-      
-      <div 
-        className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-t-2xl sm:rounded-2xl border border-border shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:fade-in duration-300"
-        onClick={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 flex items-center justify-between z-10">
-          <h2 className="text-lg sm:text-xl font-bold text-foreground">Add New Product</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 hover:bg-secondary rounded-full transition-colors touch-manipulation"
-          >
-            <X className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 z-10">
+          <DialogTitle className="text-lg sm:text-xl font-bold">Add New Product</DialogTitle>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          {/* Hidden file input - placed outside of buttons for better mobile compatibility */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            className="hidden"
+            capture={undefined}
+          />
+
           {/* Image Upload Section */}
           <div className="space-y-2">
             <Label>Product Images ({imagePreviews.length}/{MAX_IMAGES})</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              className="hidden"
-            />
             
             <div className="grid grid-cols-3 gap-3">
               {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative group aspect-square">
+                <div key={`${preview}-${index}`} className="relative group aspect-square">
                   <img
                     src={preview}
                     alt={`Product preview ${index + 1}`}
@@ -351,7 +395,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity touch-manipulation"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -363,17 +407,12 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
                 </div>
               ))}
               
-              {imagePreviews.length < MAX_IMAGES && (
+              {imagePreviews.length < MAX_IMAGES && imagePreviews.length > 0 && (
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }}
-                  onTouchEnd={(e) => e.stopPropagation()}
+                  onClick={triggerFileInput}
                   disabled={isUploading}
-                  className="aspect-square border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200 touch-manipulation"
+                  className="aspect-square border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200 touch-manipulation active:bg-secondary/50"
                 >
                   {isUploading ? (
                     <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
@@ -390,14 +429,9 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             {imagePreviews.length === 0 && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  fileInputRef.current?.click();
-                }}
-                onTouchEnd={(e) => e.stopPropagation()}
+                onClick={triggerFileInput}
                 disabled={isUploading}
-                className="w-full h-32 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200 touch-manipulation"
+                className="w-full h-32 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200 touch-manipulation active:bg-secondary/50"
               >
                 {isUploading ? (
                   <>
@@ -410,7 +444,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
                       <ImagePlus className="w-6 h-6 text-muted-foreground" />
                     </div>
                     <div className="text-center">
-                      <span className="text-sm font-medium text-foreground">Click to upload images</span>
+                      <span className="text-sm font-medium text-foreground">Tap to upload images</span>
                       <p className="text-xs text-muted-foreground mt-1">Up to {MAX_IMAGES} images, PNG/JPG, max 5MB each</p>
                     </div>
                   </>
@@ -424,7 +458,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Enter product title"
               className="bg-secondary/50"
             />
@@ -435,7 +469,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Describe your product"
               className="bg-secondary/50 min-h-[100px]"
             />
@@ -447,10 +481,11 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
               <Input
                 id="price"
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
                 placeholder="0.00"
                 className="bg-secondary/50"
               />
@@ -461,10 +496,11 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
               <Input
                 id="commission"
                 type="number"
+                inputMode="numeric"
                 min="1"
                 max="50"
                 value={formData.commission}
-                onChange={(e) => setFormData({ ...formData, commission: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, commission: e.target.value }))}
                 placeholder="10"
                 className="bg-secondary/50"
               />
@@ -475,7 +511,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             <Label htmlFor="category">Category *</Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData({ ...formData, category: value })}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
             >
               <SelectTrigger className="bg-secondary/50">
                 <SelectValue placeholder="Select a category" />
@@ -504,10 +540,6 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
               type="submit"
               className="flex-1 bg-gradient-primary hover:opacity-90 touch-manipulation"
               disabled={isLoading || isUploading}
-              onClick={(e) => {
-                // Ensure button click triggers form submit on mobile
-                console.log('Submit button clicked');
-              }}
             >
               {isLoading ? (
                 <>
@@ -520,7 +552,7 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
