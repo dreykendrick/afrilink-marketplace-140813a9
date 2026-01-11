@@ -300,14 +300,28 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm" 
+        onClick={onClose}
+        onTouchEnd={(e) => {
+          // Only close if the touch target is the backdrop itself
+          if (e.target === e.currentTarget) {
+            onClose();
+          }
+        }}
+      />
       
-      <div className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-t-2xl sm:rounded-2xl border border-border shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:fade-in duration-300">
+      <div 
+        className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-t-2xl sm:rounded-2xl border border-border shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:fade-in duration-300"
+        onClick={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+      >
         <div className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 flex items-center justify-between z-10">
           <h2 className="text-lg sm:text-xl font-bold text-foreground">Add New Product</h2>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 hover:bg-secondary rounded-full transition-colors"
+            className="p-2 hover:bg-secondary rounded-full transition-colors touch-manipulation"
           >
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -352,9 +366,14 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
               {imagePreviews.length < MAX_IMAGES && (
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }}
+                  onTouchEnd={(e) => e.stopPropagation()}
                   disabled={isUploading}
-                  className="aspect-square border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200"
+                  className="aspect-square border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200 touch-manipulation"
                 >
                   {isUploading ? (
                     <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
@@ -371,9 +390,14 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             {imagePreviews.length === 0 && (
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }}
+                onTouchEnd={(e) => e.stopPropagation()}
                 disabled={isUploading}
-                className="w-full h-32 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200"
+                className="w-full h-32 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200 touch-manipulation"
               >
                 {isUploading ? (
                   <>
