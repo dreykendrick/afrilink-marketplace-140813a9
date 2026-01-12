@@ -1,4 +1,4 @@
-import { Bell, ShoppingCart, LogOut, User as UserIcon, Settings, ShieldCheck, ChevronDown } from 'lucide-react';
+import { ShoppingCart, LogOut, User as UserIcon, Settings, ShieldCheck, ChevronDown } from 'lucide-react';
 import { User } from '@/types';
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface DashboardNavProps {
   currentUser: User;
@@ -41,7 +42,7 @@ export const DashboardNav = ({
 
           {/* Desktop Nav */}
           <div className="hidden sm:flex items-center space-x-4">
-            <Bell className="w-6 h-6 text-sidebar-foreground/60 hover:text-sidebar-foreground cursor-pointer transition-colors" />
+            <NotificationDropdown />
             
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center space-x-3 px-4 py-2 bg-sidebar-accent rounded-lg hover:bg-sidebar-accent/80 transition-colors cursor-pointer">
@@ -102,7 +103,7 @@ export const DashboardNav = ({
 
           {/* Mobile Menu */}
           <div className="flex sm:hidden items-center space-x-3">
-            <Bell className="w-5 h-5 text-sidebar-foreground/60" />
+            <NotificationDropdown />
             <DropdownMenu>
               <DropdownMenuTrigger className="p-2">
                 <Avatar className="w-8 h-8">
