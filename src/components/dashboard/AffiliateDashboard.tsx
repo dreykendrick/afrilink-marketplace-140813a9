@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { DollarSign, Eye, CheckCircle, TrendingUp, Link2, Images } from 'lucide-react';
 import { User, Product, AffiliateStats } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import { StatsCard } from './StatsCard';
 import { WalletCard } from './WalletCard';
+import { ProductImagesModal } from './ProductImagesModal';
+
 interface AffiliateDashboardProps {
   currentUser: User;
   products: Product[];
@@ -12,6 +15,7 @@ interface AffiliateDashboardProps {
 }
 
 export const AffiliateDashboard = ({ currentUser, products, stats, onGenerateLink, onVerify }: AffiliateDashboardProps) => {
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   return (
     <>
       <div className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-top-3 duration-500">
@@ -35,8 +39,17 @@ export const AffiliateDashboard = ({ currentUser, products, stats, onGenerateLin
               className="bg-secondary/50 rounded-lg sm:rounded-xl overflow-hidden border border-border hover:border-primary transition-all duration-300 hover:scale-105 animate-in fade-in zoom-in-95 duration-500"
               style={{ animationDelay: `${300 + index * 100}ms` }}
             >
-              <div className="relative">
-                <img src={product.image} alt={product.title} className="w-full h-28 sm:h-32 object-cover" />
+              <div 
+                className="relative cursor-pointer group"
+                onClick={() => setSelectedProduct(product)}
+              >
+                <img src={product.image} alt={product.title} className="w-full h-28 sm:h-32 object-cover transition-transform group-hover:scale-105" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-medium flex items-center gap-1">
+                    <Images className="w-4 h-4" />
+                    View Images
+                  </div>
+                </div>
                 {product.imageCount && product.imageCount > 1 && (
                   <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-full">
                     <Images className="w-3 h-3 text-white" />
@@ -66,6 +79,15 @@ export const AffiliateDashboard = ({ currentUser, products, stats, onGenerateLin
       </div>
 
       <WalletCard balance={currentUser.wallet} />
+
+      {/* Product Images Modal */}
+      {selectedProduct && (
+        <ProductImagesModal
+          product={selectedProduct}
+          isOpen={!!selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+        />
+      )}
     </>
   );
 };
