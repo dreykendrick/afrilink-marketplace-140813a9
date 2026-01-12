@@ -1,14 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Loader2, ImagePlus, Trash2, Plus } from 'lucide-react';
+import { Loader2, ImagePlus, Trash2, Plus, Package, DollarSign, Tag, FileText, Percent, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
 interface AddProductModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -363,13 +362,23 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 z-10">
-          <DialogTitle className="text-lg sm:text-xl font-bold">Add New Product</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0 border-border bg-gradient-to-b from-card to-card/95">
+        {/* Header with gradient accent */}
+        <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border">
+          <div className="h-1 w-full bg-gradient-primary" />
+          <div className="p-4 sm:p-6 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg">
+              <Package className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">Add New Product</h2>
+              <p className="text-xs text-muted-foreground">Fill in the details to list your product</p>
+            </div>
+          </div>
+        </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-          {/* Hidden file input - placed outside of buttons for better mobile compatibility */}
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
+          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -381,26 +390,37 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
           />
 
           {/* Image Upload Section */}
-          <div className="space-y-2">
-            <Label>Product Images ({imagePreviews.length}/{MAX_IMAGES})</Label>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <ImagePlus className="w-4 h-4 text-primary" />
+              <Label className="text-sm font-semibold">Product Images</Label>
+              <span className="ml-auto text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">
+                {imagePreviews.length}/{MAX_IMAGES}
+              </span>
+            </div>
             
             <div className="grid grid-cols-3 gap-3">
               {imagePreviews.map((preview, index) => (
-                <div key={`${preview}-${index}`} className="relative group aspect-square">
+                <div 
+                  key={`${preview}-${index}`} 
+                  className="relative group aspect-square animate-in zoom-in-95 duration-300"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
                   <img
                     src={preview}
                     alt={`Product preview ${index + 1}`}
-                    className="w-full h-full object-cover rounded-xl border border-border"
+                    className="w-full h-full object-cover rounded-xl border-2 border-border group-hover:border-primary/50 transition-colors shadow-md"
                   />
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity touch-manipulation"
+                    className="absolute -top-2 -right-2 p-1.5 bg-destructive text-destructive-foreground rounded-full shadow-lg opacity-0 group-hover:opacity-100 sm:opacity-100 transition-all duration-200 hover:scale-110 touch-manipulation"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
                   {index === 0 && (
-                    <span className="absolute bottom-1 left-1 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+                    <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-gradient-primary text-primary-foreground text-xs font-medium rounded-full shadow-md flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
                       Main
                     </span>
                   )}
@@ -412,14 +432,16 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
                   type="button"
                   onClick={triggerFileInput}
                   disabled={isUploading}
-                  className="aspect-square border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200 touch-manipulation active:bg-secondary/50"
+                  className="aspect-square border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all duration-300 touch-manipulation active:scale-95 group"
                 >
                   {isUploading ? (
-                    <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
                   ) : (
                     <>
-                      <Plus className="w-6 h-6 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Add</span>
+                      <div className="w-8 h-8 rounded-full bg-secondary/80 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                      <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">Add More</span>
                     </>
                   )}
                 </button>
@@ -431,21 +453,25 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
                 type="button"
                 onClick={triggerFileInput}
                 disabled={isUploading}
-                className="w-full h-32 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-200 touch-manipulation active:bg-secondary/50"
+                className="w-full h-36 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-primary hover:bg-primary/5 transition-all duration-300 touch-manipulation active:scale-[0.98] group"
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="w-10 h-10 text-muted-foreground animate-spin" />
-                    <span className="text-sm text-muted-foreground">Uploading...</span>
+                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Loader2 className="w-7 h-7 text-primary animate-spin" />
+                    </div>
+                    <span className="text-sm text-primary font-medium">Uploading...</span>
                   </>
                 ) : (
                   <>
-                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-                      <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <ImagePlus className="w-7 h-7 text-primary" />
                     </div>
                     <div className="text-center">
-                      <span className="text-sm font-medium text-foreground">Tap to upload images</span>
-                      <p className="text-xs text-muted-foreground mt-1">Up to {MAX_IMAGES} images, PNG/JPG, max 5MB each</p>
+                      <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        Tap to upload images
+                      </span>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB • Max {MAX_IMAGES} images</p>
                     </div>
                   </>
                 )}
@@ -453,72 +479,110 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             )}
           </div>
 
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-card px-3 text-xs text-muted-foreground uppercase tracking-wider">Product Details</span>
+            </div>
+          </div>
+
+          {/* Title Field */}
           <div className="space-y-2">
-            <Label htmlFor="title">Product Title *</Label>
+            <div className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-primary" />
+              <Label htmlFor="title" className="text-sm font-semibold">Product Title</Label>
+              <span className="text-destructive">*</span>
+            </div>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter product title"
-              className="bg-secondary/50"
+              placeholder="e.g. Premium Wireless Headphones"
+              className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20 h-11"
             />
           </div>
 
+          {/* Description Field */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              <Label htmlFor="description" className="text-sm font-semibold">Description</Label>
+            </div>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe your product"
-              className="bg-secondary/50 min-h-[100px]"
+              placeholder="Describe your product features, benefits, and what makes it special..."
+              className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20 min-h-[100px] resize-none"
             />
           </div>
 
+          {/* Price & Commission Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Price *</Label>
-              <Input
-                id="price"
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
-                value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                placeholder="0.00"
-                className="bg-secondary/50"
-              />
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-afrilink-green" />
+                <Label htmlFor="price" className="text-sm font-semibold">Price</Label>
+                <span className="text-destructive">*</span>
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
+                <Input
+                  id="price"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={formData.price}
+                  onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                  placeholder="0.00"
+                  className="bg-secondary/30 border-border focus:border-afrilink-green focus:ring-afrilink-green/20 h-11 pl-7"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="commission">Commission (%)</Label>
-              <Input
-                id="commission"
-                type="number"
-                inputMode="numeric"
-                min="1"
-                max="50"
-                value={formData.commission}
-                onChange={(e) => setFormData(prev => ({ ...prev, commission: e.target.value }))}
-                placeholder="10"
-                className="bg-secondary/50"
-              />
+              <div className="flex items-center gap-2">
+                <Percent className="w-4 h-4 text-afrilink-purple" />
+                <Label htmlFor="commission" className="text-sm font-semibold">Commission</Label>
+              </div>
+              <div className="relative">
+                <Input
+                  id="commission"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="50"
+                  value={formData.commission}
+                  onChange={(e) => setFormData(prev => ({ ...prev, commission: e.target.value }))}
+                  placeholder="10"
+                  className="bg-secondary/30 border-border focus:border-afrilink-purple focus:ring-afrilink-purple/20 h-11 pr-7"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">%</span>
+              </div>
             </div>
           </div>
 
+          {/* Category Field */}
           <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4 text-primary" />
+              <Label htmlFor="category" className="text-sm font-semibold">Category</Label>
+              <span className="text-destructive">*</span>
+            </div>
             <Select
               value={formData.category}
               onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
             >
-              <SelectTrigger className="bg-secondary/50">
+              <SelectTrigger className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20 h-11">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border-border">
                 {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
+                  <SelectItem key={cat} value={cat} className="focus:bg-primary/10 focus:text-foreground">
                     {cat}
                   </SelectItem>
                 ))}
@@ -526,19 +590,20 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
             </Select>
           </div>
 
-          <div className="pt-4 flex gap-3">
+          {/* Action Buttons */}
+          <div className="pt-4 flex gap-3 border-t border-border">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 h-11 border-border hover:bg-secondary/50"
               disabled={isLoading || isUploading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-gradient-primary hover:opacity-90 touch-manipulation"
+              className="flex-1 h-11 bg-gradient-primary hover:opacity-90 shadow-lg hover:shadow-glow transition-all duration-300 touch-manipulation"
               disabled={isLoading || isUploading}
             >
               {isLoading ? (
@@ -547,7 +612,10 @@ export const AddProductModal = ({ isOpen, onClose, onProductAdded }: AddProductM
                   Creating...
                 </>
               ) : (
-                'Add Product'
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Add Product
+                </>
               )}
             </Button>
           </div>
