@@ -40,7 +40,7 @@ const IndexContent = () => {
   // Real data states
   const [products, setProducts] = useState<Product[]>([]);
   const [rawProducts, setRawProducts] = useState<any[]>([]);
-  const [profile, setProfile] = useState<{ full_name: string; wallet_balance: number } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string; wallet_balance: number; verification_photo_url: string | null; verification_status: string | null } | null>(null);
   const [vendorStats, setVendorStats] = useState<VendorStats>({ revenue: 0, sales: 0, products: 0, pending: 0 });
   const [affiliateStats, setAffiliateStats] = useState<AffiliateStats>({ commission: 0, clicks: 0, conversions: 0, rate: 0 });
   const [affiliateLinks, setAffiliateLinks] = useState<any[]>([]);
@@ -91,7 +91,7 @@ const IndexContent = () => {
     try {
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('full_name, wallet_balance')
+        .select('full_name, wallet_balance, verification_photo_url, verification_status')
         .eq('id', user.id)
         .single();
       
@@ -318,6 +318,8 @@ const IndexContent = () => {
     email: user.email || '',
     role: userRole || 'vendor',
     wallet: profile.wallet_balance || 0,
+    verified: profile.verification_status === 'verified',
+    avatarUrl: profile.verification_status === 'verified' ? profile.verification_photo_url || undefined : undefined,
   } : null;
 
   // Get categories from products
