@@ -19,6 +19,7 @@ export interface User {
   role: 'vendor' | 'affiliate' | 'consumer';
   wallet: number;
   verified?: boolean;
+  avatarUrl?: string;
 }
 
 export interface Application {

@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { NotificationDropdown } from './NotificationDropdown';
 
@@ -46,7 +46,10 @@ export const DashboardNav = ({
             
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center space-x-3 px-4 py-2 bg-sidebar-accent rounded-lg hover:bg-sidebar-accent/80 transition-colors cursor-pointer">
-                <Avatar className="w-8 h-8">
+                <Avatar className="w-8 h-8 border-2 border-primary/20">
+                  {currentUser.avatarUrl && (
+                    <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} className="object-cover" />
+                  )}
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                     {getInitials(currentUser.name)}
                   </AvatarFallback>
@@ -106,7 +109,10 @@ export const DashboardNav = ({
             <NotificationDropdown />
             <DropdownMenu>
               <DropdownMenuTrigger className="p-2">
-                <Avatar className="w-8 h-8">
+                <Avatar className="w-8 h-8 border-2 border-primary/20">
+                  {currentUser.avatarUrl && (
+                    <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} className="object-cover" />
+                  )}
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                     {getInitials(currentUser.name)}
                   </AvatarFallback>
