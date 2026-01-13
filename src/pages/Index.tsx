@@ -403,11 +403,11 @@ const IndexContent = () => {
           userId={userId}
           onComplete={() => {
             if (user) {
-              showNotification('Verification complete!');
+              showNotification('Verification submitted! Awaiting admin approval.');
               setView('dashboard');
               fetchUserData();
             } else {
-              showNotification('Verification complete! Please log in.');
+              showNotification('Verification submitted! Please log in. An admin will review your documents.');
               setView('login');
               setPendingUserId(null);
             }
