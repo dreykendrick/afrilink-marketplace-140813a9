@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Camera, Phone, Mail, Upload, CheckCircle } from 'lucide-react';
+import { Camera, Phone, Mail, Upload, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-
 interface VerificationFormProps {
   userId: string;
   onComplete: () => void;
@@ -124,13 +123,16 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
         .from('profiles')
         .update({ 
           email_verified: true,
-          verification_status: 'verified' 
+          verification_status: 'pending_review' 
         })
         .eq('id', userId);
 
       if (error) throw error;
 
-      toast({ title: 'Success', description: 'Account verified successfully!' });
+      toast({ 
+        title: 'Verification Submitted!', 
+        description: 'Your documents are under review. You will be notified once approved.' 
+      });
       onComplete();
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -222,13 +224,25 @@ export const VerificationForm = ({ userId, onComplete }: VerificationFormProps) 
             )}
           </div>
 
+          {/* Pending Review Notice */}
+          <div className="flex items-start space-x-3 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-amber-900 dark:text-amber-100 text-sm sm:text-base">Admin Approval Required</p>
+              <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">
+                After submitting, your verification will be reviewed by our team. This usually takes 1-2 business days.
+              </p>
+            </div>
+          </div>
+
           <Button 
             onClick={handleComplete}
             disabled={!phoneVerified || !photoUploaded}
             className="w-full"
             size="lg"
           >
-            Complete Verification
+            <Clock className="w-4 h-4 mr-2" />
+            Submit for Review
           </Button>
         </CardContent>
       </Card>
