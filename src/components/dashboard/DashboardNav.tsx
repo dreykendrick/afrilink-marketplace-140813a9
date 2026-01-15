@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTheme } from 'next-themes';
 import { 
   ShoppingCart, 
   LogOut, 
@@ -47,7 +48,12 @@ export const DashboardNav = ({
   onNavigateToMarketplace
 }: DashboardNavProps) => {
   const [copied, setCopied] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const { theme, setTheme } = useTheme();
+  const isDarkMode = theme === 'dark';
+
+  const toggleTheme = (checked: boolean) => {
+    setTheme(checked ? 'dark' : 'light');
+  };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -201,13 +207,13 @@ export const DashboardNav = ({
         <div className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-secondary/50 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
-              {darkMode ? <Moon className="w-4 h-4 text-muted-foreground" /> : <Sun className="w-4 h-4 text-amber-500" />}
+              {isDarkMode ? <Moon className="w-4 h-4 text-muted-foreground" /> : <Sun className="w-4 h-4 text-amber-500" />}
             </div>
             <span className="font-medium text-sm">Dark Mode</span>
           </div>
           <Switch 
-            checked={darkMode} 
-            onCheckedChange={setDarkMode}
+            checked={isDarkMode} 
+            onCheckedChange={toggleTheme}
             className="data-[state=checked]:bg-primary"
           />
         </div>
