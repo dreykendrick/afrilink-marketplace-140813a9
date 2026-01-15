@@ -1,10 +1,30 @@
 import { useState } from 'react';
-import { DollarSign, ShoppingCart, Package, Eye, Plus } from 'lucide-react';
+import { DollarSign, ShoppingCart, Package, Eye, Plus, MoreVertical, ArrowDownCircle, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { User, Product, VendorStats } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import { StatsCard } from './StatsCard';
 import { WalletCard } from './WalletCard';
 import { AddProductModal } from './AddProductModal';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
 interface VendorDashboardProps {
   currentUser: User;
   products: Product[];
@@ -15,9 +35,81 @@ interface VendorDashboardProps {
 
 export const VendorDashboard = ({ currentUser, products, stats, onVerify, onProductAdded }: VendorDashboardProps) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [takedownProductId, setTakedownProductId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleProductAdded = () => {
     onProductAdded?.();
+  };
+
+  const handleTakedownRequest = async () => {
+    if (!takedownProductId) return;
+
+    const { error } = await supabase
+      .from('products')
+      .update({ status: 'pending_takedown' })
+      .eq('id', takedownProductId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to submit takedown request',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Takedown Requested',
+        description: 'Your takedown request has been submitted for admin approval.',
+      });
+      onProductAdded?.(); // Refresh the list
+    }
+    setTakedownProductId(null);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return (
+          <Badge className="bg-afrilink-green/20 text-afrilink-green border border-afrilink-green/30 text-xs">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Active
+          </Badge>
+        );
+      case 'pending':
+        return (
+          <Badge className="bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </Badge>
+        );
+      case 'pending_takedown':
+        return (
+          <Badge className="bg-orange-500/20 text-orange-500 border border-orange-500/30 text-xs">
+            <ArrowDownCircle className="w-3 h-3 mr-1" />
+            Takedown Pending
+          </Badge>
+        );
+      case 'taken_down':
+        return (
+          <Badge className="bg-muted text-muted-foreground border border-border text-xs">
+            <XCircle className="w-3 h-3 mr-1" />
+            Taken Down
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge className="bg-destructive/20 text-destructive border border-destructive/30 text-xs">
+            <XCircle className="w-3 h-3 mr-1" />
+            Rejected
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary" className="text-xs">
+            {status}
+          </Badge>
+        );
+    }
   };
 
   return (
@@ -63,12 +155,33 @@ export const VendorDashboard = ({ currentUser, products, stats, onVerify, onProd
                   <img src={product.image} alt={product.title} className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover" />
                   <div>
                     <div className="font-semibold text-foreground text-sm sm:text-base">{product.title}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">{product.category}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs sm:text-sm text-muted-foreground">{product.category}</span>
+                      {getStatusBadge(product.status)}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-foreground text-sm sm:text-base">{formatCurrency(product.price)}</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">{product.sales} sales</div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="font-bold text-foreground text-sm sm:text-base">{formatCurrency(product.price)}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">{product.sales} sales</div>
+                  </div>
+                  {product.status === 'approved' && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem 
+                          onClick={() => setTakedownProductId(product.id)}
+                          className="text-orange-500 focus:text-orange-500"
+                        >
+                          <ArrowDownCircle className="w-4 h-4 mr-2" />
+                          Request Takedown
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </div>
             ))
@@ -83,6 +196,29 @@ export const VendorDashboard = ({ currentUser, products, stats, onVerify, onProd
         onClose={() => setIsAddModalOpen(false)}
         onProductAdded={handleProductAdded}
       />
+
+      <AlertDialog open={!!takedownProductId} onOpenChange={() => setTakedownProductId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-orange-500" />
+              Request Product Takedown
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will submit a takedown request to the admin for approval. Your product will remain visible until the request is approved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleTakedownRequest}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              Submit Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

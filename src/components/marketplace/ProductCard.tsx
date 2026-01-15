@@ -4,7 +4,7 @@ import { formatCurrency } from '@/utils/currency';
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (productId: number) => void;
+  onAddToCart: (productId: string) => void;
   onClick: (product: Product) => void;
   index: number;
 }

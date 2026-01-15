@@ -1,5 +1,5 @@
 export interface Product {
-  id: number;
+  id: string;
   title: string;
   description: string;
   price: number;
@@ -8,12 +8,12 @@ export interface Product {
   image: string;
   images?: string[];
   imageCount?: number;
-  status: 'approved' | 'pending' | 'rejected';
+  status: 'approved' | 'pending' | 'rejected' | 'pending_takedown' | 'taken_down';
   sales: number;
 }
 
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: 'vendor' | 'affiliate' | 'consumer';
