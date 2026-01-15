@@ -6,7 +6,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Check, X, Eye } from 'lucide-react';
+import { Check, X, Eye, ArrowDownCircle, RotateCcw } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -25,7 +25,7 @@ const Products = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'pending_takedown' | 'taken_down'>('all');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -54,7 +54,7 @@ const Products = () => {
     }
   };
 
-  const updateProductStatus = async (productId: string, status: 'approved' | 'rejected') => {
+  const updateProductStatus = async (productId: string, status: 'approved' | 'rejected' | 'taken_down') => {
     const { error } = await supabase
       .from('products')
       .update({ status })
@@ -69,7 +69,28 @@ const Products = () => {
     } else {
       toast({
         title: 'Success',
-        description: `Product ${status}`,
+        description: `Product ${status === 'taken_down' ? 'taken down' : status}`,
+      });
+      fetchProducts();
+    }
+  };
+
+  const rejectTakedown = async (productId: string) => {
+    const { error } = await supabase
+      .from('products')
+      .update({ status: 'approved' })
+      .eq('id', productId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to reject takedown request',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Success',
+        description: 'Takedown request rejected, product remains active',
       });
       fetchProducts();
     }
@@ -89,6 +110,10 @@ const Products = () => {
         return <Badge className="bg-green-500">Approved</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
+      case 'pending_takedown':
+        return <Badge className="bg-orange-500">Takedown Requested</Badge>;
+      case 'taken_down':
+        return <Badge className="bg-gray-500">Taken Down</Badge>;
       default:
         return <Badge variant="secondary">Pending</Badge>;
     }
@@ -105,21 +130,22 @@ const Products = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Products</h1>
             <p className="text-muted-foreground">Manage product listings</p>
           </div>
 
-          <div className="flex gap-2">
-            {(['all', 'pending', 'approved', 'rejected'] as const).map((f) => (
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'pending', 'approved', 'pending_takedown', 'taken_down', 'rejected'] as const).map((f) => (
               <Button
                 key={f}
                 variant={filter === f ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilter(f)}
+                className={f === 'pending_takedown' ? 'whitespace-nowrap' : ''}
               >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'pending_takedown' ? 'Takedown Requests' : f === 'taken_down' ? 'Taken Down' : f.charAt(0).toUpperCase() + f.slice(1)}
               </Button>
             ))}
           </div>
@@ -169,6 +195,7 @@ const Products = () => {
                               variant="outline"
                               className="text-green-600 hover:text-green-700"
                               onClick={() => updateProductStatus(product.id, 'approved')}
+                              title="Approve"
                             >
                               <Check className="w-4 h-4" />
                             </Button>
@@ -177,8 +204,31 @@ const Products = () => {
                               variant="outline"
                               className="text-red-600 hover:text-red-700"
                               onClick={() => updateProductStatus(product.id, 'rejected')}
+                              title="Reject"
                             >
                               <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                        {product.status === 'pending_takedown' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-orange-600 hover:text-orange-700"
+                              onClick={() => updateProductStatus(product.id, 'taken_down')}
+                              title="Approve Takedown"
+                            >
+                              <ArrowDownCircle className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-blue-600 hover:text-blue-700"
+                              onClick={() => rejectTakedown(product.id)}
+                              title="Reject Takedown (Keep Active)"
+                            >
+                              <RotateCcw className="w-4 h-4" />
                             </Button>
                           </>
                         )}

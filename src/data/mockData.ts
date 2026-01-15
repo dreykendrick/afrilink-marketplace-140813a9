@@ -2,7 +2,7 @@ import { Product, User, VendorStats, AffiliateStats, Application } from '@/types
 
 export const products: Product[] = [
   {
-    id: 1,
+    id: '1',
     title: 'Digital Marketing Course',
     description: 'Master social media marketing',
     price: 150000,
@@ -13,7 +13,7 @@ export const products: Product[] = [
     sales: 45,
   },
   {
-    id: 2,
+    id: '2',
     title: 'E-Commerce Guide',
     description: 'Launch your online store',
     price: 85000,
@@ -24,7 +24,7 @@ export const products: Product[] = [
     sales: 32,
   },
   {
-    id: 3,
+    id: '3',
     title: 'SEO Toolkit',
     description: 'Boost your rankings',
     price: 120000,
@@ -37,9 +37,9 @@ export const products: Product[] = [
 ];
 
 export const users: Record<string, User> = {
-  vendor: { id: 1, name: 'John Kamau', email: 'john@example.com', role: 'vendor', wallet: 850000 },
-  affiliate: { id: 2, name: 'Amina Hassan', email: 'amina@example.com', role: 'affiliate', wallet: 320000 },
-  consumer: { id: 3, name: 'David Mwanga', email: 'david@example.com', role: 'consumer', wallet: 50000 },
+  vendor: { id: '1', name: 'John Kamau', email: 'john@example.com', role: 'vendor', wallet: 850000 },
+  affiliate: { id: '2', name: 'Amina Hassan', email: 'amina@example.com', role: 'affiliate', wallet: 320000 },
+  consumer: { id: '3', name: 'David Mwanga', email: 'david@example.com', role: 'consumer', wallet: 50000 },
 };
 
 export const vendorStats: VendorStats = {

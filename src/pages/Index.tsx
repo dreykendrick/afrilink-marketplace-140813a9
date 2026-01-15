@@ -108,7 +108,7 @@ const IndexContent = () => {
         if (vendorProducts) {
           setRawProducts(vendorProducts);
           const formattedProducts: Product[] = vendorProducts.map(p => ({
-            id: parseInt(p.id.substring(0, 8), 16),
+            id: p.id,
             title: p.title,
             description: p.description || '',
             price: p.price,
@@ -117,7 +117,7 @@ const IndexContent = () => {
             image: p.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&q=80',
             images: p.image_urls || [],
             imageCount: p.image_urls?.length || (p.image_url ? 1 : 0),
-            status: p.status as 'approved' | 'pending' | 'rejected',
+            status: p.status as 'approved' | 'pending' | 'rejected' | 'pending_takedown' | 'taken_down',
             sales: p.sales,
           }));
           setProducts(formattedProducts);
@@ -142,7 +142,7 @@ const IndexContent = () => {
         if (approvedProducts) {
           setRawProducts(approvedProducts);
           const formattedProducts: Product[] = approvedProducts.map(p => ({
-            id: parseInt(p.id.substring(0, 8), 16),
+            id: p.id,
             title: p.title,
             description: p.description || '',
             price: p.price,
@@ -151,7 +151,7 @@ const IndexContent = () => {
             image: p.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&q=80',
             images: p.image_urls || [],
             imageCount: p.image_urls?.length || (p.image_url ? 1 : 0),
-            status: p.status as 'approved' | 'pending' | 'rejected',
+            status: p.status as 'approved' | 'pending' | 'rejected' | 'pending_takedown' | 'taken_down',
             sales: p.sales,
           }));
           setProducts(formattedProducts);
@@ -194,7 +194,7 @@ const IndexContent = () => {
       if (approvedProducts) {
         setRawProducts(approvedProducts);
         const formattedProducts: Product[] = approvedProducts.map(p => ({
-          id: parseInt(p.id.substring(0, 8), 16),
+          id: p.id,
           title: p.title,
           description: p.description || '',
           price: p.price,
@@ -203,7 +203,7 @@ const IndexContent = () => {
           image: p.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&q=80',
           images: p.image_urls || [],
           imageCount: p.image_urls?.length || (p.image_url ? 1 : 0),
-          status: p.status as 'approved' | 'pending' | 'rejected',
+          status: p.status as 'approved' | 'pending' | 'rejected' | 'pending_takedown' | 'taken_down',
           sales: p.sales,
         }));
         setProducts(formattedProducts);
@@ -225,11 +225,11 @@ const IndexContent = () => {
     showNotification('Logged out successfully');
   };
 
-  const handleGenerateLink = async (productId: number) => {
+  const handleGenerateLink = async (productId: string) => {
     if (!user) return;
     
-    // Find the raw product by matching the converted id
-    const rawProduct = rawProducts.find(p => parseInt(p.id.substring(0, 8), 16) === productId);
+    // Find the raw product by ID
+    const rawProduct = rawProducts.find(p => p.id === productId);
     if (!rawProduct) {
       toast.error('Product not found');
       return;
@@ -270,9 +270,9 @@ const IndexContent = () => {
     }
   };
 
-  const handleAddToCart = (productId: number) => {
+  const handleAddToCart = (productId: string) => {
     const product = products.find(p => p.id === productId);
-    const rawProduct = rawProducts.find(p => parseInt(p.id.substring(0, 8), 16) === productId);
+    const rawProduct = rawProducts.find(p => p.id === productId);
     
     if (product && rawProduct) {
       addToCart({
@@ -289,7 +289,7 @@ const IndexContent = () => {
 
   const handleBuyProduct = () => {
     if (selectedProduct) {
-      const rawProduct = rawProducts.find(p => parseInt(p.id.substring(0, 8), 16) === selectedProduct.id);
+      const rawProduct = rawProducts.find(p => p.id === selectedProduct.id);
       if (rawProduct) {
         addToCart({
           id: rawProduct.id,
@@ -313,7 +313,7 @@ const IndexContent = () => {
   };
 
   const currentUser: User | null = user && profile ? {
-    id: parseInt(user.id.substring(0, 8), 16),
+    id: user.id,
     name: profile.full_name || user.email?.split('@')[0] || 'User',
     email: user.email || '',
     role: userRole || 'vendor',

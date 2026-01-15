@@ -10,7 +10,7 @@ interface AffiliateDashboardProps {
   currentUser: User;
   products: Product[];
   stats: AffiliateStats;
-  onGenerateLink: (productId: number) => void;
+  onGenerateLink: (productId: string) => void;
   onVerify: () => void;
 }
 
