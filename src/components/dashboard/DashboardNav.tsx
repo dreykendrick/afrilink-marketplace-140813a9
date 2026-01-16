@@ -14,7 +14,8 @@ import {
   Users,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Download
 } from 'lucide-react';
 import { User } from '@/types';
 import {
@@ -31,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { NotificationDropdown } from './NotificationDropdown';
 import { formatCurrency } from '@/utils/currency';
 import { Switch } from '@/components/ui/switch';
+import { WithdrawModal } from './WithdrawModal';
 
 interface DashboardNavProps {
   currentUser: User;
@@ -39,6 +41,7 @@ interface DashboardNavProps {
   onNavigateToVerification?: () => void;
   onNavigateToMarketplace?: () => void;
   onNavigateToHelp?: () => void;
+  onWalletUpdate?: () => void;
 }
 
 export const DashboardNav = ({ 
@@ -47,8 +50,10 @@ export const DashboardNav = ({
   onNavigateToSettings,
   onNavigateToVerification,
   onNavigateToMarketplace,
-  onNavigateToHelp
+  onNavigateToHelp,
+  onWalletUpdate
 }: DashboardNavProps) => {
+  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const { theme, setTheme } = useTheme();
   const isDarkMode = theme === 'dark';
@@ -148,9 +153,13 @@ export const DashboardNav = ({
               <p className="font-bold text-foreground">{formatCurrency(currentUser.wallet)}</p>
             </div>
           </div>
-          <Badge variant="outline" className="text-xs text-afrilink-green border-afrilink-green/30 bg-afrilink-green/10 cursor-pointer hover:bg-afrilink-green/20 transition-colors">
+          <button 
+            onClick={() => setIsWithdrawOpen(true)}
+            className="flex items-center gap-1 text-xs text-afrilink-green border border-afrilink-green/30 bg-afrilink-green/10 hover:bg-afrilink-green/20 transition-colors px-2 py-1 rounded-md font-medium"
+          >
+            <Download className="w-3 h-3" />
             Withdraw
-          </Badge>
+          </button>
         </div>
       </div>
 
@@ -310,6 +319,13 @@ export const DashboardNav = ({
           </div>
         </div>
       </div>
+
+      <WithdrawModal
+        isOpen={isWithdrawOpen}
+        onClose={() => setIsWithdrawOpen(false)}
+        balance={currentUser.wallet}
+        onWithdrawSuccess={() => onWalletUpdate?.()}
+      />
     </nav>
   );
 };

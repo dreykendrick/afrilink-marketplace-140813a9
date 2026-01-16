@@ -462,6 +462,7 @@ const IndexContent = () => {
           onNavigateToVerification={() => setView('verification-manage')}
           onNavigateToMarketplace={() => handleNavigate('marketplace')}
           onNavigateToHelp={() => setView('help-support')}
+          onWalletUpdate={fetchUserData}
         />
         <div className="p-4 sm:p-6 lg:p-8">
           {dataLoading ? (

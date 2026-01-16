@@ -3,7 +3,6 @@ import { DollarSign, Eye, CheckCircle, TrendingUp, Link2, Images } from 'lucide-
 import { User, Product, AffiliateStats } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import { StatsCard } from './StatsCard';
-import { WalletCard } from './WalletCard';
 import { ProductImagesModal } from './ProductImagesModal';
 
 interface AffiliateDashboardProps {
@@ -77,8 +76,6 @@ export const AffiliateDashboard = ({ currentUser, products, stats, onGenerateLin
           ))}
         </div>
       </div>
-
-      <WalletCard balance={currentUser.wallet} />
 
       {/* Product Images Modal */}
       {selectedProduct && (
