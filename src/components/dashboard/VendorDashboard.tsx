@@ -3,7 +3,6 @@ import { DollarSign, ShoppingCart, Package, Eye, Plus, MoreVertical, ArrowDownCi
 import { User, Product, VendorStats } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import { StatsCard } from './StatsCard';
-import { WalletCard } from './WalletCard';
 import { AddProductModal } from './AddProductModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -188,8 +187,6 @@ export const VendorDashboard = ({ currentUser, products, stats, onVerify, onProd
           )}
         </div>
       </div>
-
-      <WalletCard balance={currentUser.wallet} />
 
       <AddProductModal
         isOpen={isAddModalOpen}
