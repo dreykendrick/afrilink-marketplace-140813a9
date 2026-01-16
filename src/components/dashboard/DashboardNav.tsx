@@ -38,6 +38,7 @@ interface DashboardNavProps {
   onNavigateToSettings?: () => void;
   onNavigateToVerification?: () => void;
   onNavigateToMarketplace?: () => void;
+  onNavigateToHelp?: () => void;
 }
 
 export const DashboardNav = ({ 
@@ -45,7 +46,8 @@ export const DashboardNav = ({
   onLogout,
   onNavigateToSettings,
   onNavigateToVerification,
-  onNavigateToMarketplace
+  onNavigateToMarketplace,
+  onNavigateToHelp
 }: DashboardNavProps) => {
   const [copied, setCopied] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -223,7 +225,10 @@ export const DashboardNav = ({
 
       {/* Help & Support */}
       <DropdownMenuGroup className="p-2">
-        <DropdownMenuItem className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-secondary/80">
+        <DropdownMenuItem 
+          onClick={onNavigateToHelp}
+          className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-secondary/80"
+        >
           <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center mr-3">
             <HelpCircle className="w-4 h-4 text-muted-foreground" />
           </div>

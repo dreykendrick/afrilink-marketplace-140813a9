@@ -8,6 +8,9 @@ import { VerificationForm } from '@/components/auth/VerificationForm';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
 import { VendorDashboard } from '@/components/dashboard/VendorDashboard';
 import { AffiliateDashboard } from '@/components/dashboard/AffiliateDashboard';
+import { SettingsPage } from '@/components/dashboard/SettingsPage';
+import { VerificationManagePage } from '@/components/dashboard/VerificationManagePage';
+import { HelpSupportPage } from '@/components/dashboard/HelpSupportPage';
 import { MarketplaceNav } from '@/components/marketplace/MarketplaceNav';
 import { ProductCard } from '@/components/marketplace/ProductCard';
 import { ProductModal } from '@/components/marketplace/ProductModal';
@@ -21,7 +24,7 @@ import { User, Product, VendorStats, AffiliateStats } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type View = 'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'verification' | 'dashboard' | 'marketplace';
+type View = 'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'verification' | 'dashboard' | 'marketplace' | 'settings' | 'verification-manage' | 'help-support';
 
 const IndexContent = () => {
   const { user, loading: authLoading, userRole, signOut } = useAuth();
@@ -420,10 +423,46 @@ const IndexContent = () => {
     );
   }
 
+  if (view === 'settings' && currentUser) {
+    return (
+      <SettingsPage 
+        currentUser={currentUser} 
+        onBack={() => setView('dashboard')}
+        onRefresh={fetchUserData}
+      />
+    );
+  }
+
+  if (view === 'verification-manage' && currentUser) {
+    return (
+      <VerificationManagePage 
+        currentUser={currentUser} 
+        onBack={() => setView('dashboard')}
+        onRefresh={fetchUserData}
+      />
+    );
+  }
+
+  if (view === 'help-support' && currentUser) {
+    return (
+      <HelpSupportPage 
+        currentUser={currentUser} 
+        onBack={() => setView('dashboard')}
+      />
+    );
+  }
+
   if (view === 'dashboard' && currentUser) {
     return (
       <div className="min-h-screen bg-background">
-        <DashboardNav currentUser={currentUser} onLogout={handleLogout} />
+        <DashboardNav 
+          currentUser={currentUser} 
+          onLogout={handleLogout}
+          onNavigateToSettings={() => setView('settings')}
+          onNavigateToVerification={() => setView('verification-manage')}
+          onNavigateToMarketplace={() => handleNavigate('marketplace')}
+          onNavigateToHelp={() => setView('help-support')}
+        />
         <div className="p-4 sm:p-6 lg:p-8">
           {dataLoading ? (
             <div className="flex items-center justify-center py-20">
