@@ -17,6 +17,10 @@ import { ProductModal } from '@/components/marketplace/ProductModal';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { CheckoutModal } from '@/components/cart/CheckoutModal';
 import { Notification } from '@/components/Notification';
+import { WelcomeScreen } from '@/components/onboarding/WelcomeScreen';
+import { RoleSelection } from '@/components/onboarding/RoleSelection';
+import { RegistrationFlow } from '@/components/onboarding/RegistrationFlow';
+import { VendorProfileSetup } from '@/components/onboarding/VendorProfileSetup';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart, CartProvider } from '@/hooks/useCart';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +28,22 @@ import { User, Product, VendorStats, AffiliateStats } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type View = 'landing' | 'login' | 'signup' | 'forgot-password' | 'reset-password' | 'verification' | 'dashboard' | 'marketplace' | 'settings' | 'verification-manage' | 'help-support';
+type View =
+  | 'landing'
+  | 'login'
+  | 'signup'
+  | 'forgot-password'
+  | 'reset-password'
+  | 'verification'
+  | 'dashboard'
+  | 'marketplace'
+  | 'settings'
+  | 'verification-manage'
+  | 'help-support'
+  | 'welcome'
+  | 'role-selection'
+  | 'onboarding-register'
+  | 'vendor-profile-setup';
 
 const IndexContent = () => {
   const { user, loading: authLoading, userRole, signOut } = useAuth();
@@ -35,6 +54,8 @@ const IndexContent = () => {
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [onboardingRole, setOnboardingRole] = useState<'vendor' | 'affiliate' | null>(null);
+  const [postGrabProductId, setPostGrabProductId] = useState<string | null>(null);
   
   // Marketplace filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,6 +99,13 @@ const IndexContent = () => {
         });
     }
   }, []);
+
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('afrilink_onboarding_seen');
+    if (!user && !hasSeenOnboarding) {
+      setView('welcome');
+    }
+  }, [user]);
 
   // Redirect to dashboard if logged in
   useEffect(() => {
@@ -273,6 +301,22 @@ const IndexContent = () => {
     }
   };
 
+  const handleGrabLink = async (productId: string) => {
+    if (!user) {
+      setPostGrabProductId(productId);
+      setOnboardingRole('affiliate');
+      setView('onboarding-register');
+      return;
+    }
+
+    if (userRole !== 'affiliate') {
+      toast.error('Grab Link is available for affiliate accounts only.');
+      return;
+    }
+
+    await handleGenerateLink(productId);
+  };
+
   const handleAddToCart = (productId: string) => {
     const product = products.find(p => p.id === productId);
     const rawProduct = rawProducts.find(p => p.id === productId);
@@ -350,6 +394,84 @@ const IndexContent = () => {
         <LandingPage products={products} onNavigate={handleNavigate} onLogin={() => handleNavigate('login')} />
         {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
       </>
+    );
+  }
+
+  if (view === 'welcome') {
+    return (
+      <WelcomeScreen
+        onContinue={() => {
+          localStorage.setItem('afrilink_onboarding_seen', 'true');
+          setView('role-selection');
+        }}
+      />
+    );
+  }
+
+  if (view === 'role-selection') {
+    return (
+      <RoleSelection
+        onSelect={(role) => {
+          if (role === 'browse') {
+            handleNavigate('marketplace');
+            return;
+          }
+          setOnboardingRole(role);
+          setView('onboarding-register');
+        }}
+      />
+    );
+  }
+
+  if (view === 'onboarding-register') {
+    if (!onboardingRole) {
+      setView('role-selection');
+      return null;
+    }
+
+    return (
+      <RegistrationFlow
+        role={onboardingRole}
+        onBack={() => setView('role-selection')}
+        onComplete={async (_userId, role) => {
+          await fetchUserData();
+
+          if (role === 'vendor') {
+            setView('vendor-profile-setup');
+            return;
+          }
+
+          await fetchMarketplaceProducts();
+          setView('marketplace');
+
+          if (postGrabProductId) {
+            await handleGenerateLink(postGrabProductId);
+            const targetProduct = products.find((product) => product.id === postGrabProductId);
+            if (targetProduct) {
+              setSelectedProduct(targetProduct);
+            }
+            setPostGrabProductId(null);
+          }
+        }}
+      />
+    );
+  }
+
+  if (view === 'vendor-profile-setup') {
+    if (!user) {
+      setView('login');
+      return null;
+    }
+
+    return (
+      <VendorProfileSetup
+        userId={user.id}
+        onComplete={() => {
+          showNotification('Vendor profile completed!');
+          fetchUserData();
+          setView('dashboard');
+        }}
+      />
     );
   }
 
@@ -516,6 +638,7 @@ const IndexContent = () => {
                   key={product.id}
                   product={product}
                   onAddToCart={handleAddToCart}
+                  onGrabLink={handleGrabLink}
                   onClick={setSelectedProduct}
                   index={index}
                 />
@@ -524,7 +647,12 @@ const IndexContent = () => {
           )}
         </div>
         {selectedProduct && (
-          <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onBuy={handleBuyProduct} />
+          <ProductModal
+            product={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
+            onBuy={handleBuyProduct}
+            onGrabLink={handleGrabLink}
+          />
         )}
         <CartDrawer
           isOpen={cartOpen}

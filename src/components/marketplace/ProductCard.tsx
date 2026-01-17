@@ -1,15 +1,18 @@
-import { ShoppingCart } from 'lucide-react';
+import { Link2, ShoppingCart } from 'lucide-react';
 import { Product } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 
 interface ProductCardProps {
   product: Product;
   onAddToCart: (productId: string) => void;
+  onGrabLink: (productId: string) => void;
   onClick: (product: Product) => void;
   index: number;
 }
 
-export const ProductCard = ({ product, onAddToCart, onClick, index }: ProductCardProps) => {
+export const ProductCard = ({ product, onAddToCart, onGrabLink, onClick, index }: ProductCardProps) => {
+  const earningEstimate = Math.round((product.price * product.commission) / 100);
+
   return (
     <div
       className="bg-card rounded-xl sm:rounded-2xl overflow-hidden border border-border hover:border-primary transition-all duration-300 cursor-pointer hover:scale-105 shadow-card animate-in fade-in zoom-in-95 duration-500"
@@ -21,20 +24,36 @@ export const ProductCard = ({ product, onAddToCart, onClick, index }: ProductCar
         <div className="text-xs text-primary font-semibold mb-2">{product.category}</div>
         <h3 className="text-base sm:text-lg font-bold text-foreground mb-2">{product.title}</h3>
         <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 line-clamp-2">{product.description}</p>
-        <div className="flex justify-between items-center mb-3 sm:mb-4">
+        <div className="flex justify-between items-center mb-2">
           <span className="text-xl sm:text-2xl font-bold text-foreground">{formatCurrency(product.price)}</span>
           <span className="text-xs sm:text-sm text-muted-foreground">{product.sales} sales</span>
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToCart(product.id);
-          }}
-          className="w-full py-2.5 sm:py-3 bg-gradient-primary text-white rounded-lg font-semibold hover:shadow-glow transition-all duration-300 flex items-center justify-center space-x-2 text-sm sm:text-base"
-        >
-          <ShoppingCart className="w-4 h-4" />
-          <span>Add to Cart</span>
-        </button>
+        <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground mb-3">
+          <span className="font-medium text-afrilink-green">{product.commission}% commission</span>
+          <span>Earn {formatCurrency(earningEstimate)}</span>
+        </div>
+        <div className="grid gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onGrabLink(product.id);
+            }}
+            className="w-full py-2.5 sm:py-3 bg-foreground text-background rounded-lg font-semibold hover:bg-foreground/90 transition-all duration-300 flex items-center justify-center space-x-2 text-sm sm:text-base"
+          >
+            <Link2 className="w-4 h-4" />
+            <span>Grab Link</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart(product.id);
+            }}
+            className="w-full py-2.5 sm:py-3 bg-gradient-primary text-white rounded-lg font-semibold hover:shadow-glow transition-all duration-300 flex items-center justify-center space-x-2 text-sm sm:text-base"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span>Add to Cart</span>
+          </button>
+        </div>
       </div>
     </div>
   );
